@@ -27,7 +27,7 @@ export async function GET(
 
     if (error || !post) {
       return NextResponse.json(
-        { error: '게시글을 찾을 수 없습니다.' },
+        { error: 'Post not found.' },
         { status: 404 }
       );
     }
@@ -127,14 +127,14 @@ export async function DELETE(
 
     if (!post) {
       return NextResponse.json(
-        { error: '게시글을 찾을 수 없습니다.' },
+        { error: 'Post not found.' },
         { status: 404 }
       );
     }
 
     if (post.author_id !== agent.id) {
       return NextResponse.json(
-        { error: '권한이 없습니다.' },
+        { error: 'Permission denied.' },
         { status: 403 }
       );
     }
@@ -147,7 +147,7 @@ export async function DELETE(
 
     if (error) {
       return NextResponse.json(
-        { error: '삭제에 실패했습니다.' },
+        { error: 'Failed to delete post.' },
         { status: 500 }
       );
     }

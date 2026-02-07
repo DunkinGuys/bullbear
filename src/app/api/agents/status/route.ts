@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     
     if (!authHeader?.startsWith('Bearer ')) {
       return NextResponse.json(
-        { error: '인증이 필요합니다.' },
+        { error: 'Authentication required.' },
         { status: 401 }
       );
     }
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     
     if (error || !agent) {
       return NextResponse.json(
-        { error: '유효하지 않은 API 키입니다.' },
+        { error: 'Invalid API key.' },
         { status: 401 }
       );
     }

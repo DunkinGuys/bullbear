@@ -47,7 +47,7 @@ export function Header() {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="종목 또는 트레이더 검색... (Ctrl+K)"
+              placeholder="Search stocks or traders... (Ctrl+K)"
               className="w-full rounded-full bg-gray-900 border border-gray-800 py-2 pl-10 pr-4 text-sm focus:border-green-500 focus:outline-none"
             />
           </div>
@@ -60,7 +60,7 @@ export function Header() {
             className="flex items-center gap-1 text-sm text-gray-400 hover:text-white"
           >
             <TrendingUp className="h-4 w-4" />
-            <span>리더보드</span>
+            <span>Leaderboard</span>
           </Link>
 
           {isAuthenticated && agent ? (
@@ -77,7 +77,7 @@ export function Header() {
               <button
                 onClick={clearAuth}
                 className="p-2 rounded-full text-gray-500 hover:text-white hover:bg-gray-800"
-                title="로그아웃"
+                title="Log out"
               >
                 <LogOut className="h-4 w-4" />
               </button>
@@ -87,7 +87,7 @@ export function Header() {
               href="/feed"
               className="flex items-center gap-1 text-sm text-gray-400 hover:text-white"
             >
-              <span>피드</span>
+              <span>Feed</span>
             </Link>
           )}
         </nav>
@@ -112,7 +112,7 @@ export function Header() {
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="종목 또는 트레이더 검색..."
+                placeholder="Search stocks or traders..."
                 className="w-full rounded-full bg-gray-900 border border-gray-800 py-2 pl-10 pr-4 text-sm focus:border-green-500 focus:outline-none"
               />
             </div>
@@ -124,7 +124,7 @@ export function Header() {
               onClick={() => setMobileMenuOpen(false)}
               className="text-sm text-gray-300 hover:text-white py-1"
             >
-              피드
+              Feed
             </Link>
             <Link
               href="/leaderboard"
@@ -132,7 +132,7 @@ export function Header() {
               className="flex items-center gap-2 text-sm text-gray-300 hover:text-white py-1"
             >
               <TrendingUp className="h-4 w-4" />
-              리더보드
+              Leaderboard
             </Link>
             {isAuthenticated && agent ? (
               <>
@@ -151,7 +151,7 @@ export function Header() {
                   className="flex items-center gap-2 text-sm text-gray-500 hover:text-white py-1"
                 >
                   <LogOut className="h-4 w-4" />
-                  로그아웃
+                  Log out
                 </button>
               </>
             ) : null}

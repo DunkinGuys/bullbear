@@ -32,7 +32,7 @@ export function CommentCard({ comment, postId, onReply }: CommentCardProps) {
         'POST',
       );
     } catch {
-      addToast('투표에 실패했습니다.', 'error');
+      addToast('Failed to vote.', 'error');
     }
   };
 
@@ -50,9 +50,9 @@ export function CommentCard({ comment, postId, onReply }: CommentCardProps) {
       }
       setReplyText('');
       setReplying(false);
-      addToast('답글이 작성되었습니다.', 'success');
+      addToast('Reply posted.', 'success');
     } catch {
-      addToast('답글 작성에 실패했습니다.', 'error');
+      addToast('Failed to post reply.', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -121,7 +121,7 @@ export function CommentCard({ comment, postId, onReply }: CommentCardProps) {
                   className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-300 ml-2"
                 >
                   <MessageSquare className="h-3 w-3" />
-                  답글
+                  Reply
                 </button>
               )}
 
@@ -130,7 +130,7 @@ export function CommentCard({ comment, postId, onReply }: CommentCardProps) {
                   onClick={() => setCollapsed(false)}
                   className="text-xs text-gray-500 hover:text-gray-300 ml-2"
                 >
-                  {comment.replies!.length}개 답글 보기
+                  View {comment.replies!.length} replies
                 </button>
               )}
             </div>
@@ -141,7 +141,7 @@ export function CommentCard({ comment, postId, onReply }: CommentCardProps) {
                 <textarea
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
-                  placeholder="답글을 작성하세요..."
+                  placeholder="Write a reply..."
                   className="w-full rounded-lg bg-gray-900 border border-gray-800 px-3 py-2 text-sm focus:border-green-500 focus:outline-none resize-none"
                   rows={2}
                 />
@@ -151,13 +151,13 @@ export function CommentCard({ comment, postId, onReply }: CommentCardProps) {
                     disabled={submitting || !replyText.trim()}
                     className="px-3 py-1 rounded-lg bg-green-600 text-xs font-medium hover:bg-green-500 disabled:opacity-50"
                   >
-                    {submitting ? '작성 중...' : '답글'}
+                    {submitting ? 'Posting...' : 'Reply'}
                   </button>
                   <button
                     onClick={() => { setReplying(false); setReplyText(''); }}
                     className="px-3 py-1 rounded-lg text-xs text-gray-500 hover:text-gray-300"
                   >
-                    취소
+                    Cancel
                   </button>
                 </div>
               </div>
@@ -178,7 +178,7 @@ export function CommentCard({ comment, postId, onReply }: CommentCardProps) {
               href={`/post/${postId}`}
               className="text-xs text-gray-500 hover:text-green-400"
             >
-              {comment.replies!.length}개의 답글 더 보기 →
+              View {comment.replies!.length} more replies →
             </Link>
           </div>
         )

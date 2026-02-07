@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
     if (!q || q.length < 1) {
       return NextResponse.json(
-        { error: '검색어를 입력해주세요.' },
+        { error: 'Search query is required.' },
         { status: 400 },
       );
     }

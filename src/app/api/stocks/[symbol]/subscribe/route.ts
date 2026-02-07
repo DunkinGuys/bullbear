@@ -69,7 +69,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       if (createError) {
         console.error('Stock creation error:', createError);
         return NextResponse.json(
-          { error: '종목 생성에 실패했습니다.' },
+          { error: 'Failed to create stock.' },
           { status: 500 }
         );
       }
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     if (!stock) {
       return NextResponse.json(
-        { error: '종목 처리에 실패했습니다.' },
+        { error: 'Failed to process stock.' },
         { status: 500 }
       );
     }
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({
         success: true,
         action: 'already_subscribed',
-        message: `이미 ${stock.symbol}을(를) 구독하고 있습니다.`,
+        message: `Already subscribed to ${stock.symbol}.`,
       });
     }
 
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     if (subError) {
       console.error('Subscription error:', subError);
       return NextResponse.json(
-        { error: '구독에 실패했습니다.' },
+        { error: 'Failed to subscribe.' },
         { status: 500 }
       );
     }
@@ -122,7 +122,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({
       success: true,
       action: 'subscribed',
-      message: `${stock.symbol} 종목을 구독합니다!`,
+      message: `Subscribed to ${stock.symbol}!`,
       stock: {
         id: stock.id,
         symbol: stock.symbol,
@@ -157,7 +157,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     if (!stock) {
       return NextResponse.json(
-        { error: '종목을 찾을 수 없습니다.' },
+        { error: 'Stock not found.' },
         { status: 404 }
       );
     }
@@ -175,7 +175,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({
         success: true,
         action: 'not_subscribed',
-        message: `${stock.symbol}을(를) 구독하고 있지 않습니다.`,
+        message: `Not subscribed to ${stock.symbol}.`,
       });
     }
 
@@ -185,7 +185,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({
       success: true,
       action: 'unsubscribed',
-      message: `${stock.symbol} 구독을 취소했습니다.`,
+      message: `Unsubscribed from ${stock.symbol}.`,
     });
 
   } catch (error) {

@@ -40,7 +40,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
     } catch {
       // Revert on error
       mutate();
-      addToast('투표에 실패했습니다.', 'error');
+      addToast('Failed to vote.', 'error');
     }
   };
 
@@ -54,9 +54,9 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
       });
       setCommentText('');
       mutateComments();
-      addToast('댓글이 작성되었습니다.', 'success');
+      addToast('Comment posted.', 'success');
     } catch {
-      addToast('댓글 작성에 실패했습니다.', 'error');
+      addToast('Failed to post comment.', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -74,8 +74,8 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
   if (error || !post) {
     return (
       <div className="max-w-2xl mx-auto py-12 text-center">
-        <p className="text-gray-500 text-lg mb-4">게시글을 찾을 수 없습니다.</p>
-        <Link href="/feed" className="text-green-400 hover:underline">피드로 돌아가기</Link>
+        <p className="text-gray-500 text-lg mb-4">Post not found.</p>
+        <Link href="/feed" className="text-green-400 hover:underline">Back to feed</Link>
       </div>
     );
   }
@@ -87,7 +87,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
       {/* Back */}
       <Link href="/feed" className="flex items-center gap-1 text-gray-500 hover:text-white mb-6 text-sm">
         <ArrowLeft className="h-4 w-4" />
-        피드로 돌아가기
+        Back to feed
       </Link>
 
       {/* Post */}
@@ -135,9 +135,9 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
               ? 'bg-green-900/50 text-green-400'
               : 'bg-red-900/50 text-red-400'
           }`}>
-            {post.trade.tradeType === 'buy' ? '📈 매수' : '📉 매도'}
-            <span>{post.trade.quantity}주</span>
-            <span>@{post.trade.price.toLocaleString()}원</span>
+            {post.trade.tradeType === 'buy' ? '📈 Buy' : '📉 Sell'}
+            <span>{post.trade.quantity} shares</span>
+            <span>@${post.trade.price.toLocaleString()}</span>
           </div>
         )}
 
@@ -180,7 +180,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
           <textarea
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
-            placeholder="댓글을 작성하세요..."
+            placeholder="Write a comment..."
             className="w-full rounded-xl bg-gray-900 border border-gray-800 px-4 py-3 text-sm focus:border-green-500 focus:outline-none resize-none"
             rows={3}
           />
@@ -190,7 +190,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
               disabled={submitting || !commentText.trim()}
               className="px-4 py-2 rounded-lg bg-green-600 text-sm font-medium hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {submitting ? '작성 중...' : '댓글 작성'}
+              {submitting ? 'Posting...' : 'Post Comment'}
             </button>
           </div>
         </form>
@@ -199,7 +199,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
       {/* Comments */}
       <div className="mt-6">
         <h2 className="text-lg font-semibold mb-4">
-          댓글 {post.commentCount > 0 && `(${post.commentCount})`}
+          Comments {post.commentCount > 0 && `(${post.commentCount})`}
         </h2>
         {commentsData?.data && commentsData.data.length > 0 ? (
           <div className="space-y-1">
@@ -208,7 +208,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
             ))}
           </div>
         ) : (
-          <p className="text-gray-500 text-sm">아직 댓글이 없습니다.</p>
+          <p className="text-gray-500 text-sm">No comments yet.</p>
         )}
       </div>
     </div>

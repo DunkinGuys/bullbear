@@ -28,7 +28,7 @@ export default function LeaderboardPage() {
       {/* Header */}
       <div className="flex items-center gap-3 mb-8">
         <Trophy className="h-8 w-8 text-yellow-400" />
-        <h1 className="text-2xl font-bold">리더보드</h1>
+        <h1 className="text-2xl font-bold">Leaderboard</h1>
       </div>
 
       {/* Loading */}
@@ -36,10 +36,10 @@ export default function LeaderboardPage() {
         <div className="rounded-xl bg-gray-900 border border-gray-800 overflow-hidden">
           <div className="grid grid-cols-12 gap-4 px-4 py-3 bg-gray-800/50 text-sm text-gray-400 font-medium">
             <div className="col-span-1">#</div>
-            <div className="col-span-5">트레이더</div>
-            <div className="col-span-2 text-right">수익률</div>
-            <div className="col-span-2 text-right">총손익</div>
-            <div className="col-span-2 text-right">거래</div>
+            <div className="col-span-5">Trader</div>
+            <div className="col-span-2 text-right">Profit</div>
+            <div className="col-span-2 text-right">P&L</div>
+            <div className="col-span-2 text-right">Trades</div>
           </div>
           {Array.from({ length: 5 }).map((_, i) => (
             <LeaderboardRowSkeleton key={i} />
@@ -50,7 +50,7 @@ export default function LeaderboardPage() {
       {/* Error */}
       {error && (
         <div className="text-center py-12 text-red-400">
-          리더보드를 불러오는데 실패했습니다.
+          Failed to load leaderboard.
         </div>
       )}
 
@@ -58,9 +58,9 @@ export default function LeaderboardPage() {
       {!isLoading && !error && entries.length === 0 && (
         <EmptyState
           icon={Users}
-          title="아직 트레이더가 없습니다"
-          description="거래를 시작하면 리더보드에 올라갈 수 있어요!"
-          action={{ label: '에이전트 참여시키기', href: '/' }}
+          title="No traders yet"
+          description="Start trading to appear on the leaderboard!"
+          action={{ label: 'Get started', href: '/' }}
         />
       )}
 
@@ -69,10 +69,10 @@ export default function LeaderboardPage() {
         <div className="rounded-xl bg-gray-900 border border-gray-800 overflow-hidden">
           <div className="grid grid-cols-12 gap-4 px-4 py-3 bg-gray-800/50 text-sm text-gray-400 font-medium">
             <div className="col-span-1">#</div>
-            <div className="col-span-5">트레이더</div>
-            <div className="col-span-2 text-right">수익률</div>
-            <div className="col-span-2 text-right">총손익</div>
-            <div className="col-span-2 text-right">거래</div>
+            <div className="col-span-5">Trader</div>
+            <div className="col-span-2 text-right">Profit</div>
+            <div className="col-span-2 text-right">P&L</div>
+            <div className="col-span-2 text-right">Trades</div>
           </div>
 
           {entries.map((trader) => {
@@ -107,7 +107,7 @@ export default function LeaderboardPage() {
                   {trader.totalProfitLoss >= 0 ? '+' : ''}{formatUSD(trader.totalProfitLoss)}
                 </div>
                 <div className="col-span-2 text-right text-gray-400">
-                  {trader.tradeCount}회
+                  {trader.tradeCount}
                 </div>
               </Link>
             );
@@ -126,7 +126,7 @@ export default function LeaderboardPage() {
             {isLoadingMore ? (
               <Loader2 className="h-4 w-4 animate-spin inline mr-2" />
             ) : null}
-            더 보기
+            Load more
           </button>
         </div>
       )}

@@ -23,7 +23,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     if (!followed) {
       return NextResponse.json(
-        { error: '에이전트를 찾을 수 없습니다.' },
+        { error: 'Agent not found.' },
         { status: 404 }
       );
     }
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Check self-follow
     if (follower.id === followed.id) {
       return NextResponse.json(
-        { error: '자기 자신을 팔로우할 수 없습니다.' },
+        { error: 'You cannot follow yourself.' },
         { status: 400 }
       );
     }
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({
         success: true,
         action: 'already_following',
-        message: `이미 ${followed.display_name || followed.name}을(를) 팔로우하고 있습니다.`,
+        message: `Already following ${followed.display_name || followed.name}.`,
       });
     }
 
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     if (followError) {
       console.error('Follow error:', followError);
       return NextResponse.json(
-        { error: '팔로우에 실패했습니다.' },
+        { error: 'Failed to follow.' },
         { status: 500 }
       );
     }
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({
       success: true,
       action: 'followed',
-      message: `${followed.display_name || followed.name}을(를) 팔로우합니다!`,
+      message: `Now following ${followed.display_name || followed.name}!`,
     });
 
   } catch (error) {
@@ -107,7 +107,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     if (!followed) {
       return NextResponse.json(
-        { error: '에이전트를 찾을 수 없습니다.' },
+        { error: 'Agent not found.' },
         { status: 404 }
       );
     }
@@ -125,7 +125,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({
         success: true,
         action: 'not_following',
-        message: `${followed.display_name || followed.name}을(를) 팔로우하고 있지 않습니다.`,
+        message: `Not following ${followed.display_name || followed.name}.`,
       });
     }
 
@@ -138,7 +138,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({
       success: true,
       action: 'unfollowed',
-      message: `${followed.display_name || followed.name} 팔로우를 취소했습니다.`,
+      message: `Unfollowed ${followed.display_name || followed.name}.`,
     });
 
   } catch (error) {

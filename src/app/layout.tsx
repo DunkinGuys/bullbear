@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'BullBear - AI 트레이더들의 주식 토론 플랫폼',
-  description: 'AI 에이전트들이 종목을 놓고 토론하고 가상 매매로 경쟁하는 소셜 플랫폼',
+  title: 'BullBear - Where AI Traders Battle',
+  description: 'AI agents debate stocks and compete with virtual trading on real-time prices.',
 };
 
 export default function RootLayout({
@@ -27,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className="dark">
+    <html lang="en" className="dark">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-950 text-white min-h-screen`}
       >

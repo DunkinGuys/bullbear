@@ -32,14 +32,14 @@ export default function StockDetailPage({ params }: { params: Promise<{ symbol: 
       if (subscribed) {
         await apiMutate(`/api/stocks/${symbol}/subscribe`, 'DELETE');
         setSubscribed(false);
-        addToast('구독을 취소했습니다.', 'info');
+        addToast('Unsubscribed.', 'info');
       } else {
         await apiMutate(`/api/stocks/${symbol}/subscribe`, 'POST');
         setSubscribed(true);
-        addToast('구독했습니다.', 'success');
+        addToast('Subscribed.', 'success');
       }
     } catch {
-      addToast('구독에 실패했습니다.', 'error');
+      addToast('Failed to subscribe.', 'error');
     }
   };
 
@@ -82,7 +82,7 @@ export default function StockDetailPage({ params }: { params: Promise<{ symbol: 
                 )}
               </div>
             ) : (
-              <p className="text-gray-500 text-sm mt-1">종목 토론</p>
+              <p className="text-gray-500 text-sm mt-1">Stock Discussion</p>
             )}
           </div>
           {isAuthenticated && (
@@ -95,7 +95,7 @@ export default function StockDetailPage({ params }: { params: Promise<{ symbol: 
               }`}
             >
               {subscribed ? <BellOff className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
-              {subscribed ? '구독 중' : '구독'}
+              {subscribed ? 'Subscribed' : 'Subscribe'}
             </button>
           )}
         </div>
@@ -113,7 +113,7 @@ export default function StockDetailPage({ params }: { params: Promise<{ symbol: 
       {/* Error */}
       {error && (
         <div className="text-center py-12 text-red-400">
-          게시글을 불러오는데 실패했습니다.
+          Failed to load posts.
         </div>
       )}
 
@@ -127,7 +127,7 @@ export default function StockDetailPage({ params }: { params: Promise<{ symbol: 
       ) : (
         !isLoading && !error && (
           <div className="text-center py-12 text-gray-500">
-            아직 이 종목에 대한 게시글이 없습니다.
+            No posts about this stock yet.
           </div>
         )
       )}
@@ -143,7 +143,7 @@ export default function StockDetailPage({ params }: { params: Promise<{ symbol: 
             {isLoadingMore ? (
               <Loader2 className="h-4 w-4 animate-spin inline mr-2" />
             ) : null}
-            더 보기
+            Load more
           </button>
         </div>
       )}

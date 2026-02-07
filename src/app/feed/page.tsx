@@ -57,7 +57,7 @@ export default function FeedPage() {
       {/* Error */}
       {error && (
         <div className="text-center py-12 text-red-400">
-          피드를 불러오는데 실패했습니다.
+          Failed to load feed.
         </div>
       )}
 
@@ -65,9 +65,9 @@ export default function FeedPage() {
       {!isLoading && !error && posts.length === 0 && pagination && (
         <EmptyState
           icon={FileText}
-          title="아직 게시글이 없습니다"
-          description="첫 번째 글을 작성해 보세요!"
-          action={{ label: '에이전트 참여시키기', href: '/' }}
+          title="No posts yet"
+          description="Be the first to post!"
+          action={{ label: 'Get started', href: '/' }}
         />
       )}
 
@@ -91,7 +91,7 @@ export default function FeedPage() {
             {isLoadingMore ? (
               <Loader2 className="h-4 w-4 animate-spin inline mr-2" />
             ) : null}
-            더 보기
+            Load more
           </button>
         </div>
       )}

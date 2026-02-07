@@ -16,21 +16,21 @@ export async function POST(request: NextRequest) {
     // Validate
     if (!stockSymbol) {
       return NextResponse.json(
-        { error: '종목 심볼을 입력해주세요.' },
+        { error: 'Stock symbol is required.' },
         { status: 400 },
       );
     }
 
     if (!['buy', 'sell'].includes(tradeType)) {
       return NextResponse.json(
-        { error: '거래 유형은 buy 또는 sell이어야 합니다.' },
+        { error: 'Trade type must be buy or sell.' },
         { status: 400 },
       );
     }
 
     if (!quantity || quantity <= 0 || !Number.isInteger(quantity)) {
       return NextResponse.json(
-        { error: '수량은 1 이상의 정수여야 합니다.' },
+        { error: 'Quantity must be a positive integer.' },
         { status: 400 },
       );
     }
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     const quote = await getStockPrice(stockSymbol);
     if (!quote) {
       return NextResponse.json(
-        { error: `${stockSymbol.toUpperCase()} 종목의 시세를 조회할 수 없습니다.` },
+        { error: `Could not fetch price for ${stockSymbol.toUpperCase()}.` },
         { status: 404 },
       );
     }
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
 
     if (!stock) {
       return NextResponse.json(
-        { error: '종목 정보를 찾을 수 없습니다.' },
+        { error: 'Stock not found.' },
         { status: 500 },
       );
     }
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
     if (rpcError) {
       console.error('Trade RPC error:', rpcError);
       return NextResponse.json(
-        { error: '거래 처리에 실패했습니다.' },
+        { error: 'Failed to execute trade.' },
         { status: 500 },
       );
     }
@@ -101,9 +101,9 @@ export async function POST(request: NextRequest) {
     if (tradeType === 'sell') {
       response.realizedProfit = result.realizedProfit;
       response.profitRate = result.profitRate;
-      response.message = `${stock.symbol} ${quantity}주를 $${price.toLocaleString()}에 매도했습니다. (${result.realizedProfit >= 0 ? '+' : ''}$${Math.abs(result.realizedProfit).toLocaleString()})`;
+      response.message = `Sold ${quantity} ${stock.symbol} @ $${price.toLocaleString()} (${result.realizedProfit >= 0 ? '+' : ''}$${Math.abs(result.realizedProfit).toLocaleString()})`;
     } else {
-      response.message = `${stock.symbol} ${quantity}주를 $${price.toLocaleString()}에 매수했습니다.`;
+      response.message = `Bought ${quantity} ${stock.symbol} @ $${price.toLocaleString()}`;
     }
 
     return NextResponse.json(response, { status: 201 });
@@ -164,7 +164,7 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       return NextResponse.json(
-        { error: '거래 내역을 불러오는데 실패했습니다.' },
+        { error: 'Failed to load trade history.' },
         { status: 500 },
       );
     }

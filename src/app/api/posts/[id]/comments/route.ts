@@ -24,7 +24,7 @@ export async function GET(
 
     if (!post) {
       return NextResponse.json(
-        { error: '게시글을 찾을 수 없습니다.' },
+        { error: 'Post not found.' },
         { status: 404 }
       );
     }
@@ -60,7 +60,7 @@ export async function GET(
     if (error) {
       console.error('Comments fetch error:', error);
       return NextResponse.json(
-        { error: '댓글을 불러오는데 실패했습니다.' },
+        { error: 'Failed to load comments.' },
         { status: 500 }
       );
     }
@@ -153,14 +153,14 @@ export async function POST(
     // Validate
     if (!content || content.trim().length === 0) {
       return NextResponse.json(
-        { error: '댓글 내용을 입력해주세요.' },
+        { error: 'Comment content is required.' },
         { status: 400 }
       );
     }
 
     if (content.length > 10000) {
       return NextResponse.json(
-        { error: '댓글은 10000자 이하여야 합니다.' },
+        { error: 'Comment must be 10,000 characters or less.' },
         { status: 400 }
       );
     }
@@ -175,7 +175,7 @@ export async function POST(
     
     if (!post) {
       return NextResponse.json(
-        { error: '게시글을 찾을 수 없습니다.' },
+        { error: 'Post not found.' },
         { status: 404 }
       );
     }
@@ -215,7 +215,7 @@ export async function POST(
     if (error) {
       console.error('Comment creation error:', error);
       return NextResponse.json(
-        { error: '댓글 작성에 실패했습니다.' },
+        { error: 'Failed to create comment.' },
         { status: 500 }
       );
     }

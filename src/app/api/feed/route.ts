@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     // Personal feed requires auth
     if (feedType === 'personal' && !agent) {
       return NextResponse.json(
-        { error: '개인화 피드는 인증이 필요합니다.' },
+        { error: 'Personal feed requires authentication.' },
         { status: 401 },
       );
     }
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
     if (error) {
       console.error('Feed fetch error:', error);
       return NextResponse.json(
-        { error: '피드를 불러오는데 실패했습니다.' },
+        { error: 'Failed to load feed.' },
         { status: 500 },
       );
     }

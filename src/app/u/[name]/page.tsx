@@ -35,15 +35,15 @@ export default function UserProfilePage({ params }: { params: Promise<{ name: st
       if (following) {
         await apiMutate(`/api/agents/${name}/follow`, 'DELETE');
         setFollowing(false);
-        addToast('팔로우를 취소했습니다.', 'info');
+        addToast('Unfollowed.', 'info');
       } else {
         await apiMutate(`/api/agents/${name}/follow`, 'POST');
         setFollowing(true);
-        addToast('팔로우했습니다.', 'success');
+        addToast('Followed.', 'success');
       }
       mutateAgent();
     } catch {
-      addToast('팔로우에 실패했습니다.', 'error');
+      addToast('Failed to follow.', 'error');
     }
   };
 
@@ -63,8 +63,8 @@ export default function UserProfilePage({ params }: { params: Promise<{ name: st
   if (error || !agent) {
     return (
       <div className="max-w-2xl mx-auto py-12 text-center">
-        <p className="text-gray-500 text-lg mb-4">트레이더를 찾을 수 없습니다.</p>
-        <Link href="/feed" className="text-green-400 hover:underline">피드로 돌아가기</Link>
+        <p className="text-gray-500 text-lg mb-4">Trader not found.</p>
+        <Link href="/feed" className="text-green-400 hover:underline">Back to feed</Link>
       </div>
     );
   }
@@ -92,7 +92,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ name: st
                   }`}
                 >
                   {following ? <UserMinus className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
-                  {following ? '팔로잉' : '팔로우'}
+                  {following ? 'Following' : 'Follow'}
                 </button>
               )}
             </div>
@@ -112,32 +112,32 @@ export default function UserProfilePage({ params }: { params: Promise<{ name: st
               {isPositive ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
               {formatPercent(agent.profitRate)}
             </div>
-            <div className="text-xs text-gray-500 mt-1">수익률</div>
+            <div className="text-xs text-gray-500 mt-1">Profit</div>
           </div>
           <div className="text-center">
             <div className="text-lg font-bold flex items-center justify-center gap-1">
               <BarChart3 className="h-4 w-4 text-gray-400" />
               {agent.tradeCount}
             </div>
-            <div className="text-xs text-gray-500 mt-1">거래</div>
+            <div className="text-xs text-gray-500 mt-1">Trades</div>
           </div>
           <div className="text-center">
             <div className="text-lg font-bold flex items-center justify-center gap-1">
               <Users className="h-4 w-4 text-gray-400" />
               {agent.followerCount}
             </div>
-            <div className="text-xs text-gray-500 mt-1">팔로워</div>
+            <div className="text-xs text-gray-500 mt-1">Followers</div>
           </div>
         </div>
 
         {/* Balance */}
         <div className="flex gap-4 mt-4 pt-4 border-t border-gray-800 text-sm">
           <div>
-            <span className="text-gray-500">총자산: </span>
+            <span className="text-gray-500">Total: </span>
             <span className="font-medium">{formatUSD(agent.totalBalance)}</span>
           </div>
           <div>
-            <span className="text-gray-500">총손익: </span>
+            <span className="text-gray-500">P&L: </span>
             <span className={isPositive ? 'text-green-400' : 'text-red-400'}>
               {agent.totalProfitLoss >= 0 ? '+' : ''}{formatUSD(agent.totalProfitLoss)}
             </span>
@@ -155,7 +155,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ name: st
               : 'border-transparent text-gray-500 hover:text-gray-300'
           }`}
         >
-          게시글
+          Posts
         </button>
         <button
           onClick={() => setTab('trades')}
@@ -165,7 +165,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ name: st
               : 'border-transparent text-gray-500 hover:text-gray-300'
           }`}
         >
-          거래 내역
+          Trade History
         </button>
       </div>
 
@@ -179,7 +179,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ name: st
               ))}
             </div>
           ) : (
-            <p className="text-gray-500 text-sm py-8 text-center">아직 게시글이 없습니다.</p>
+            <p className="text-gray-500 text-sm py-8 text-center">No posts yet.</p>
           )}
           {postsPagination?.hasMore && (
             <div className="text-center py-8">
@@ -189,7 +189,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ name: st
                 className="px-6 py-2 rounded-full bg-gray-900 text-gray-400 hover:bg-gray-800 hover:text-white transition disabled:opacity-50"
               >
                 {postsLoadingMore ? <Loader2 className="h-4 w-4 animate-spin inline mr-2" /> : null}
-                더 보기
+                Load more
               </button>
             </div>
           )}
@@ -210,19 +210,19 @@ export default function UserProfilePage({ params }: { params: Promise<{ name: st
                           ? 'bg-red-500/20 text-red-400'
                           : 'bg-blue-500/20 text-blue-400'
                       }`}>
-                        {trade.tradeType === 'buy' ? '매수' : '매도'}
+                        {trade.tradeType === 'buy' ? 'BUY' : 'SELL'}
                       </span>
                       <Link href={`/s/${trade.stockSymbol}`} className="font-semibold hover:text-green-400">
                         {trade.stockSymbol}
                       </Link>
                     </div>
                     <span className="text-xs text-gray-500">
-                      {new Date(trade.createdAt).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      {new Date(trade.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-400">
-                      {trade.quantity}주 × {formatUSD(trade.price)}
+                      {trade.quantity} shares × {formatUSD(trade.price)}
                     </span>
                     <span className="font-medium">{formatUSD(trade.totalAmount)}</span>
                   </div>
@@ -238,7 +238,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ name: st
               ))}
             </div>
           ) : (
-            <p className="text-gray-500 text-sm py-8 text-center">아직 거래 내역이 없습니다.</p>
+            <p className="text-gray-500 text-sm py-8 text-center">No trade history yet.</p>
           )}
           {tradesPagination?.hasMore && (
             <div className="text-center py-8">
@@ -248,7 +248,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ name: st
                 className="px-6 py-2 rounded-full bg-gray-900 text-gray-400 hover:bg-gray-800 hover:text-white transition disabled:opacity-50"
               >
                 {tradesLoadingMore ? <Loader2 className="h-4 w-4 animate-spin inline mr-2" /> : null}
-                더 보기
+                Load more
               </button>
             </div>
           )}

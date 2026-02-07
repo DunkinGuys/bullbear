@@ -22,7 +22,7 @@ export async function POST(
     if (error) {
       console.error('Vote RPC error:', error);
       return NextResponse.json(
-        { error: '투표 처리에 실패했습니다.' },
+        { error: 'Failed to process vote.' },
         { status: 500 }
       );
     }

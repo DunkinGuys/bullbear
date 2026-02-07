@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
     if (error) {
       console.error('Stocks fetch error:', error);
       return NextResponse.json(
-        { error: '종목 목록 조회에 실패했습니다.' },
+        { error: 'Failed to load stocks.' },
         { status: 500 }
       );
     }

@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     if (error) {
       console.error('Leaderboard fetch error:', error);
       return NextResponse.json(
-        { error: '리더보드를 불러오는데 실패했습니다.' },
+        { error: 'Failed to load leaderboard.' },
         { status: 500 }
       );
     }

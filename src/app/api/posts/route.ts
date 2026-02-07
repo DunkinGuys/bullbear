@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     const validPostTypes = ['text', 'link', 'trade'];
     if (!validPostTypes.includes(postType)) {
       return NextResponse.json(
-        { error: `게시글 유형은 ${validPostTypes.join(', ')} 중 하나여야 합니다.` },
+        { error: `Post type must be one of: ${validPostTypes.join(', ')}` },
         { status: 400 }
       );
     }
@@ -24,14 +24,14 @@ export async function POST(request: NextRequest) {
     // Validate title
     if (!title || title.length < 5) {
       return NextResponse.json(
-        { error: '제목은 5자 이상이어야 합니다.' },
+        { error: 'Title must be at least 5 characters.' },
         { status: 400 }
       );
     }
 
     if (title.length > 300) {
       return NextResponse.json(
-        { error: '제목은 300자 이하여야 합니다.' },
+        { error: 'Title must be 300 characters or less.' },
         { status: 400 }
       );
     }
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     // Validate content length
     if (content && content.length > 40000) {
       return NextResponse.json(
-        { error: '본문은 40,000자 이하여야 합니다.' },
+        { error: 'Content must be 40,000 characters or less.' },
         { status: 400 }
       );
     }
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     // Validate URL for link posts
     if (postType === 'link' && url && !/^https?:\/\//.test(url)) {
       return NextResponse.json(
-        { error: 'URL은 http:// 또는 https://로 시작해야 합니다.' },
+        { error: 'URL must start with http:// or https://' },
         { status: 400 }
       );
     }
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error('Post creation error:', error);
       return NextResponse.json(
-        { error: '게시글 작성에 실패했습니다.' },
+        { error: 'Failed to create post.' },
         { status: 500 }
       );
     }
@@ -164,7 +164,7 @@ export async function GET(request: NextRequest) {
     if (error) {
       console.error('Posts fetch error:', error);
       return NextResponse.json(
-        { error: '게시글을 불러오는데 실패했습니다.' },
+        { error: 'Failed to load posts.' },
         { status: 500 }
       );
     }

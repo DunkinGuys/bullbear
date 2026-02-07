@@ -50,10 +50,10 @@ interface SearchResult {
 }
 
 const tabs: { id: SearchType; label: string; icon: typeof Search }[] = [
-  { id: 'all', label: '전체', icon: Search },
-  { id: 'stocks', label: '종목', icon: BarChart3 },
-  { id: 'agents', label: '트레이더', icon: Users },
-  { id: 'posts', label: '게시글', icon: FileText },
+  { id: 'all', label: 'All', icon: Search },
+  { id: 'stocks', label: 'Stocks', icon: BarChart3 },
+  { id: 'agents', label: 'Traders', icon: Users },
+  { id: 'posts', label: 'Posts', icon: FileText },
 ];
 
 function SearchContent() {
@@ -85,10 +85,10 @@ function SearchContent() {
         <h1 className="text-xl font-bold mb-1">
           {q ? (
             <>
-              <span className="text-gray-400">검색 결과: </span>
+              <span className="text-gray-400">Results for </span>
               <span className="text-green-400">&quot;{q}&quot;</span>
             </>
-          ) : '검색'}
+          ) : 'Search'}
         </h1>
       </div>
 
@@ -124,8 +124,8 @@ function SearchContent() {
       {!q && !loading && (
         <EmptyState
           icon={Search}
-          title="검색어를 입력하세요"
-          description="종목 심볼, 트레이더 이름, 또는 게시글 제목으로 검색할 수 있습니다."
+          title="Enter a search term"
+          description="Search by stock symbol, trader name, or post title."
         />
       )}
 
@@ -133,8 +133,8 @@ function SearchContent() {
       {q && !loading && !hasResults && data && (
         <EmptyState
           icon={Search}
-          title="검색 결과가 없습니다"
-          description={`"${q}"에 대한 검색 결과를 찾을 수 없습니다.`}
+          title="No results found"
+          description={`No results found for "${q}".`}
         />
       )}
 
@@ -146,7 +146,7 @@ function SearchContent() {
             <section>
               <h2 className="flex items-center gap-2 text-sm font-medium text-gray-400 mb-3">
                 <BarChart3 className="h-4 w-4" />
-                종목 ({data!.stocks.length})
+                Stocks ({data!.stocks.length})
               </h2>
               <div className="space-y-2">
                 {data!.stocks.map((stock) => (
@@ -162,7 +162,7 @@ function SearchContent() {
                         <span className="text-xs text-gray-600">{stock.market}</span>
                       </div>
                       <div className="text-xs text-gray-500 mt-1">
-                        구독 {stock.subscriberCount} · 게시글 {stock.postCount}
+                        {stock.subscriberCount} subscribers · {stock.postCount} posts
                       </div>
                     </div>
                     {stock.currentPrice != null && (
@@ -179,7 +179,7 @@ function SearchContent() {
             <section>
               <h2 className="flex items-center gap-2 text-sm font-medium text-gray-400 mb-3">
                 <Users className="h-4 w-4" />
-                트레이더 ({data!.agents.length})
+                Traders ({data!.agents.length})
               </h2>
               <div className="space-y-2">
                 {data!.agents.map((agent) => {
@@ -207,7 +207,7 @@ function SearchContent() {
                           {isPos ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                           {formatPercent(agent.profitRate)}
                         </div>
-                        <div className="text-xs text-gray-500">팔로워 {agent.followerCount}</div>
+                        <div className="text-xs text-gray-500">{agent.followerCount} followers</div>
                       </div>
                     </Link>
                   );
@@ -221,7 +221,7 @@ function SearchContent() {
             <section>
               <h2 className="flex items-center gap-2 text-sm font-medium text-gray-400 mb-3">
                 <FileText className="h-4 w-4" />
-                게시글 ({data!.posts.length})
+                Posts ({data!.posts.length})
               </h2>
               <div className="space-y-2">
                 {data!.posts.map((post) => (
@@ -241,8 +241,8 @@ function SearchContent() {
                     </div>
                     <div className="font-medium mb-1">{post.title}</div>
                     <div className="flex items-center gap-3 text-xs text-gray-500">
-                      <span>{post.score > 0 ? '+' : ''}{post.score} 점</span>
-                      <span>{post.commentCount} 댓글</span>
+                      <span>{post.score > 0 ? '+' : ''}{post.score} pts</span>
+                      <span>{post.commentCount} comments</span>
                     </div>
                   </Link>
                 ))}

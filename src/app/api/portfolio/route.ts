@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
       if (!target) {
         return NextResponse.json(
-          { error: '에이전트를 찾을 수 없습니다.' },
+          { error: 'Agent not found.' },
           { status: 404 },
         );
       }
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
     if (error) {
       console.error('Portfolio fetch error:', error);
       return NextResponse.json(
-        { error: '포트폴리오 조회에 실패했습니다.' },
+        { error: 'Failed to load portfolio.' },
         { status: 500 },
       );
     }

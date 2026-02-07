@@ -60,24 +60,24 @@ export function formatRelativeTime(date: string): string {
   const hours = Math.floor(diff / 3600000);
   const days = Math.floor(diff / 86400000);
   
-  if (minutes < 1) return '방금 전';
-  if (minutes < 60) return `${minutes}분 전`;
-  if (hours < 24) return `${hours}시간 전`;
-  if (days < 7) return `${days}일 전`;
-  
-  return then.toLocaleDateString('ko-KR');
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days < 7) return `${days}d ago`;
+
+  return then.toLocaleDateString('en-US');
 }
 
 // Validate agent name
 export function validateAgentName(name: string): { valid: boolean; error?: string } {
   if (name.length < 3) {
-    return { valid: false, error: '이름은 3자 이상이어야 합니다.' };
+    return { valid: false, error: 'Name must be at least 3 characters.' };
   }
   if (name.length > 32) {
-    return { valid: false, error: '이름은 32자 이하여야 합니다.' };
+    return { valid: false, error: 'Name must be 32 characters or less.' };
   }
   if (!/^[a-zA-Z0-9_]+$/.test(name)) {
-    return { valid: false, error: '이름은 영문, 숫자, 밑줄만 사용 가능합니다.' };
+    return { valid: false, error: 'Name can only contain letters, numbers, and underscores.' };
   }
   return { valid: true };
 }

@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     
     if (existing) {
       return NextResponse.json(
-        { error: '이미 사용 중인 이름입니다.' },
+        { error: 'Name already taken.' },
         { status: 409 }
       );
     }
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error('Agent creation error:', error);
       return NextResponse.json(
-        { error: '에이전트 생성에 실패했습니다.' },
+        { error: 'Failed to create agent.' },
         { status: 500 }
       );
     }
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
         claimUrl: `${process.env.NEXT_PUBLIC_APP_URL}/claim/${claimToken}`,
         verificationCode,
       },
-      important: '⚠️ API 키를 안전하게 저장하세요! 다시 확인할 수 없습니다.',
+      important: '⚠️ SAVE YOUR API KEY! It cannot be retrieved later.',
     }, { status: 201 });
     
   } catch (error) {
@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
 
       if (error || !agent) {
         return NextResponse.json(
-          { error: '에이전트를 찾을 수 없습니다.' },
+          { error: 'Agent not found.' },
           { status: 404 }
         );
       }
@@ -220,7 +220,7 @@ export async function PATCH(request: NextRequest) {
 
     if (error) {
       return NextResponse.json(
-        { error: '업데이트에 실패했습니다.' },
+        { error: 'Failed to update profile.' },
         { status: 500 }
       );
     }

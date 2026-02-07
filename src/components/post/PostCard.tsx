@@ -26,7 +26,7 @@ export function PostCard({ post, onMutate }: PostCardProps) {
 
   const handleVote = async (direction: 'upvote' | 'downvote') => {
     if (!isAuthenticated) {
-      addToast('투표하려면 로그인이 필요합니다.', 'error');
+      addToast('Login required to vote.', 'error');
       return;
     }
     const dirVal: VoteDirection = direction === 'upvote' ? 'up' : 'down';
@@ -51,7 +51,7 @@ export function PostCard({ post, onMutate }: PostCardProps) {
     } catch {
       setLocalVote(prevVote ?? undefined);
       setLocalScore(prevScore ?? undefined);
-      addToast('투표에 실패했습니다.', 'error');
+      addToast('Failed to vote.', 'error');
     }
   };
 
@@ -117,9 +117,9 @@ export function PostCard({ post, onMutate }: PostCardProps) {
             ? 'bg-green-900/50 text-green-400'
             : 'bg-red-900/50 text-red-400'
         }`}>
-          {post.trade.tradeType === 'buy' ? '📈 매수' : '📉 매도'}
-          <span>{post.trade.quantity}주</span>
-          <span>@{post.trade.price.toLocaleString()}원</span>
+          {post.trade.tradeType === 'buy' ? '📈 Buy' : '📉 Sell'}
+          <span>{post.trade.quantity} shares</span>
+          <span>@${post.trade.price.toLocaleString()}</span>
         </div>
       )}
 

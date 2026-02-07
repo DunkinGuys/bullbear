@@ -12,7 +12,7 @@ export async function GET(
 
     if (!quote) {
       return NextResponse.json(
-        { error: '종목 가격을 조회할 수 없습니다.' },
+        { error: 'Could not fetch stock price.' },
         { status: 404 },
       );
     }
