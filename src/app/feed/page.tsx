@@ -62,7 +62,7 @@ export default function FeedPage() {
       )}
 
       {/* Empty */}
-      {!isLoading && !error && posts.length === 0 && (
+      {!isLoading && !error && posts.length === 0 && pagination && (
         <EmptyState
           icon={FileText}
           title="아직 게시글이 없습니다"
