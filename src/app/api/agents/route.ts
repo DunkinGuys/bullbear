@@ -1,16 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
-import { 
-  generateApiKey, 
-  generateClaimToken, 
-  generateVerificationCode, 
+import {
+  generateApiKey,
+  generateClaimToken,
+  generateVerificationCode,
   hashApiKey,
-  validateAgentName 
+  validateAgentName
 } from '@/lib/utils';
+import { authenticateAndRateLimit, isNextResponse, optionalAuth } from '@/lib/apiAuth';
+import { checkRateLimit, rateLimitExceeded } from '@/lib/rateLimit';
 
 // POST /api/agents - Register new agent
 export async function POST(request: NextRequest) {
   try {
+    // IP-based rate limit (no auth required)
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+      || request.headers.get('x-real-ip')
+      || 'unknown';
+    const rlResult = checkRateLimit(`ip:${ip}`, 'register');
+    if (!rlResult.allowed) {
+      return rateLimitExceeded(rlResult) as unknown as NextResponse;
+    }
+
     const body = await request.json();
     const { name, description } = body;
     
@@ -27,7 +38,7 @@ export async function POST(request: NextRequest) {
     
     // Check if name already exists
     const { data: existing } = await supabase
-      .from('bb_agents')
+      .from('agents')
       .select('id')
       .eq('name', name.toLowerCase())
       .single();
@@ -47,7 +58,7 @@ export async function POST(request: NextRequest) {
     
     // Create agent
     const { data: agent, error } = await supabase
-      .from('bb_agents')
+      .from('agents')
       .insert({
         name: name.toLowerCase(),
         display_name: name,
@@ -56,7 +67,7 @@ export async function POST(request: NextRequest) {
         claim_token: claimToken,
         verification_code: verificationCode,
         status: 'pending_claim',
-        total_balance: 10000000, // 시작 자금 1000만원
+        total_balance: 100000, // Starting capital $100,000
       })
       .select()
       .single();
@@ -92,27 +103,39 @@ export async function POST(request: NextRequest) {
 // GET /api/agents - Get current agent or by name
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
     const { searchParams } = new URL(request.url);
     const name = searchParams.get('name');
-    
+
     const supabase = createServerClient();
     
     if (name) {
       // Get agent by name (public profile)
       const { data: agent, error } = await supabase
-        .from('bb_agents')
+        .from('agents')
         .select('*')
         .eq('name', name.toLowerCase())
         .single();
-      
+
       if (error || !agent) {
         return NextResponse.json(
           { error: '에이전트를 찾을 수 없습니다.' },
           { status: 404 }
         );
       }
-      
+
+      // Check follow status if requester is authenticated
+      let isFollowing = false;
+      const { agent: me } = await optionalAuth(request);
+      if (me && me.id !== agent.id) {
+        const { data: follow } = await supabase
+          .from('follows')
+          .select('id')
+          .eq('follower_id', me.id)
+          .eq('followed_id', agent.id)
+          .single();
+        isFollowing = !!follow;
+      }
+
       return NextResponse.json({
         id: agent.id,
         name: agent.name,
@@ -123,47 +146,31 @@ export async function GET(request: NextRequest) {
         followerCount: agent.follower_count,
         followingCount: agent.following_count,
         totalBalance: agent.total_balance,
+        totalProfitLoss: agent.total_profit_loss,
         profitRate: agent.profit_rate,
         tradeCount: agent.trade_count,
+        winCount: agent.win_count,
         status: agent.status,
+        isFollowing,
         createdAt: agent.created_at,
         lastActive: agent.last_active,
       });
     }
     
     // Get current agent (requires auth)
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: '인증이 필요합니다.' },
-        { status: 401 }
-      );
-    }
-    
-    const apiKey = authHeader.replace('Bearer ', '');
-    const apiKeyHash = hashApiKey(apiKey);
-    
-    const { data: agent, error } = await supabase
-      .from('bb_agents')
-      .select('*')
-      .eq('api_key_hash', apiKeyHash)
-      .single();
-    
-    if (error || !agent) {
-      return NextResponse.json(
-        { error: '유효하지 않은 API 키입니다.' },
-        { status: 401 }
-      );
-    }
-    
+    const authResult = await authenticateAndRateLimit(request, 'requests');
+    if (isNextResponse(authResult)) return authResult;
+    const { agent, supabase: authSupabase } = authResult;
+
     // Update last active
-    await supabase
-      .from('bb_agents')
+    await authSupabase
+      .from('agents')
       .update({ last_active: new Date().toISOString() })
       .eq('id', agent.id);
-    
+
     return NextResponse.json({
       id: agent.id,
-      name: agent.name,
+      name: agent.name as string,
       displayName: agent.display_name,
       description: agent.description,
       avatarUrl: agent.avatar_url,
@@ -193,56 +200,33 @@ export async function GET(request: NextRequest) {
 // PATCH /api/agents - Update current agent
 export async function PATCH(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: '인증이 필요합니다.' },
-        { status: 401 }
-      );
-    }
-    
-    const apiKey = authHeader.replace('Bearer ', '');
-    const apiKeyHash = hashApiKey(apiKey);
+    const authResult = await authenticateAndRateLimit(request, 'requests');
+    if (isNextResponse(authResult)) return authResult;
+    const { agent, supabase } = authResult;
+
     const body = await request.json();
-    
-    const supabase = createServerClient();
-    
-    // Verify agent
-    const { data: agent } = await supabase
-      .from('bb_agents')
-      .select('id')
-      .eq('api_key_hash', apiKeyHash)
-      .single();
-    
-    if (!agent) {
-      return NextResponse.json(
-        { error: '유효하지 않은 API 키입니다.' },
-        { status: 401 }
-      );
-    }
-    
+
     // Update allowed fields only
     const updates: Record<string, unknown> = {};
     if (body.displayName) updates.display_name = body.displayName;
     if (body.description) updates.description = body.description;
     if (body.avatarUrl) updates.avatar_url = body.avatarUrl;
     updates.updated_at = new Date().toISOString();
-    
+
     const { data: updated, error } = await supabase
-      .from('bb_agents')
+      .from('agents')
       .update(updates)
       .eq('id', agent.id)
       .select()
       .single();
-    
+
     if (error) {
       return NextResponse.json(
         { error: '업데이트에 실패했습니다.' },
         { status: 500 }
       );
     }
-    
+
     return NextResponse.json({
       id: updated.id,
       name: updated.name,
@@ -250,7 +234,7 @@ export async function PATCH(request: NextRequest) {
       description: updated.description,
       avatarUrl: updated.avatar_url,
     });
-    
+
   } catch (error) {
     console.error('Update agent error:', error);
     return NextResponse.json(

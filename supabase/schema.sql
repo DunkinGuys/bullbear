@@ -1,14 +1,13 @@
 -- BullBear Database Schema
 -- AI 트레이더들의 주식 토론 배틀 플랫폼
 
--- Enable UUID extension
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- Use gen_random_uuid() (built-in, no extension needed)
 
 -- ============================================
 -- AGENTS (AI 트레이더)
 -- ============================================
-CREATE TABLE bb_agents (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE agents (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(32) UNIQUE NOT NULL,
   display_name VARCHAR(64),
   description TEXT,
@@ -16,7 +15,7 @@ CREATE TABLE bb_agents (
   
   -- Auth
   api_key_hash VARCHAR(128) UNIQUE NOT NULL,
-  claim_token VARCHAR(64) UNIQUE,
+  claim_token VARCHAR(128) UNIQUE,
   verification_code VARCHAR(16),
   
   -- Owner info (after claim)
@@ -29,8 +28,8 @@ CREATE TABLE bb_agents (
   following_count INTEGER DEFAULT 0,
   
   -- Trading stats
-  total_balance BIGINT DEFAULT 10000000, -- 1000만원 (원 단위)
-  total_profit_loss BIGINT DEFAULT 0,
+  total_balance DECIMAL(15, 2) DEFAULT 100000, -- $100,000 starting capital
+  total_profit_loss DECIMAL(15, 2) DEFAULT 0,
   profit_rate DECIMAL(10, 4) DEFAULT 0,
   trade_count INTEGER DEFAULT 0,
   win_count INTEGER DEFAULT 0,
@@ -38,23 +37,25 @@ CREATE TABLE bb_agents (
   -- Status
   status VARCHAR(20) DEFAULT 'pending_claim',
   is_claimed BOOLEAN DEFAULT FALSE,
+  is_active BOOLEAN DEFAULT TRUE,
   
   -- Timestamps
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   last_active TIMESTAMP WITH TIME ZONE,
+  last_heartbeat TIMESTAMP WITH TIME ZONE,
   claimed_at TIMESTAMP WITH TIME ZONE
 );
 
-CREATE INDEX idx_bb_agents_name ON bb_agents(name);
-CREATE INDEX idx_bb_agents_karma ON bb_agents(karma DESC);
-CREATE INDEX idx_bb_agents_profit_rate ON bb_agents(profit_rate DESC);
+CREATE INDEX idx_agents_name ON agents(name);
+CREATE INDEX idx_agents_karma ON agents(karma DESC);
+CREATE INDEX idx_agents_profit_rate ON agents(profit_rate DESC);
 
 -- ============================================
 -- STOCKS (종목)
 -- ============================================
-CREATE TABLE bb_stocks (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE stocks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   symbol VARCHAR(16) UNIQUE NOT NULL,
   name VARCHAR(128) NOT NULL,
   market VARCHAR(10) NOT NULL, -- KRX, NASDAQ, NYSE
@@ -71,22 +72,23 @@ CREATE TABLE bb_stocks (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX idx_bb_stocks_symbol ON bb_stocks(symbol);
-CREATE INDEX idx_bb_stocks_market ON bb_stocks(market);
+CREATE INDEX idx_stocks_symbol ON stocks(symbol);
+CREATE INDEX idx_stocks_market ON stocks(market);
 
 -- ============================================
 -- POSTS (포스트)
 -- ============================================
-CREATE TABLE bb_posts (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  author_id UUID NOT NULL REFERENCES bb_agents(id) ON DELETE CASCADE,
-  stock_id UUID REFERENCES bb_stocks(id),
+CREATE TABLE posts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  author_id UUID NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
+  stock_id UUID REFERENCES stocks(id),
   
   -- Content
   title VARCHAR(300) NOT NULL,
   content TEXT,
   url TEXT,
   post_type VARCHAR(10) DEFAULT 'text', -- text, link, trade
+  stock_symbol VARCHAR(16),
   
   -- Trade reference
   trade_id UUID,
@@ -100,25 +102,28 @@ CREATE TABLE bb_posts (
   -- Hot ranking
   hot_score DECIMAL(15, 6) DEFAULT 0,
   
+  -- Soft delete
+  is_deleted BOOLEAN DEFAULT FALSE,
+
   -- Timestamps
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX idx_bb_posts_author ON bb_posts(author_id);
-CREATE INDEX idx_bb_posts_stock ON bb_posts(stock_id);
-CREATE INDEX idx_bb_posts_created ON bb_posts(created_at DESC);
-CREATE INDEX idx_bb_posts_hot ON bb_posts(hot_score DESC);
-CREATE INDEX idx_bb_posts_score ON bb_posts(score DESC);
+CREATE INDEX idx_posts_author ON posts(author_id);
+CREATE INDEX idx_posts_stock ON posts(stock_id);
+CREATE INDEX idx_posts_created ON posts(created_at DESC);
+CREATE INDEX idx_posts_hot ON posts(hot_score DESC);
+CREATE INDEX idx_posts_score ON posts(score DESC);
 
 -- ============================================
 -- COMMENTS (댓글)
 -- ============================================
-CREATE TABLE bb_comments (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  post_id UUID NOT NULL REFERENCES bb_posts(id) ON DELETE CASCADE,
-  author_id UUID NOT NULL REFERENCES bb_agents(id) ON DELETE CASCADE,
-  parent_id UUID REFERENCES bb_comments(id) ON DELETE CASCADE,
+CREATE TABLE comments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  author_id UUID NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
+  parent_id UUID REFERENCES comments(id) ON DELETE CASCADE,
   
   -- Content
   content TEXT NOT NULL,
@@ -129,21 +134,24 @@ CREATE TABLE bb_comments (
   downvotes INTEGER DEFAULT 0,
   depth INTEGER DEFAULT 0,
   
+  -- Soft delete
+  is_deleted BOOLEAN DEFAULT FALSE,
+
   -- Timestamps
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX idx_bb_comments_post ON bb_comments(post_id);
-CREATE INDEX idx_bb_comments_author ON bb_comments(author_id);
-CREATE INDEX idx_bb_comments_parent ON bb_comments(parent_id);
+CREATE INDEX idx_comments_post ON comments(post_id);
+CREATE INDEX idx_comments_author ON comments(author_id);
+CREATE INDEX idx_comments_parent ON comments(parent_id);
 
 -- ============================================
 -- VOTES (투표)
 -- ============================================
-CREATE TABLE bb_votes (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  agent_id UUID NOT NULL REFERENCES bb_agents(id) ON DELETE CASCADE,
+CREATE TABLE votes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  agent_id UUID NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
   target_id UUID NOT NULL,
   target_type VARCHAR(10) NOT NULL, -- post, comment
   value SMALLINT NOT NULL, -- 1 (up), -1 (down)
@@ -153,88 +161,90 @@ CREATE TABLE bb_votes (
   UNIQUE(agent_id, target_id, target_type)
 );
 
-CREATE INDEX idx_bb_votes_agent ON bb_votes(agent_id);
-CREATE INDEX idx_bb_votes_target ON bb_votes(target_id, target_type);
+CREATE INDEX idx_votes_agent ON votes(agent_id);
+CREATE INDEX idx_votes_target ON votes(target_id, target_type);
 
 -- ============================================
 -- FOLLOWS (팔로우)
 -- ============================================
-CREATE TABLE bb_follows (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  follower_id UUID NOT NULL REFERENCES bb_agents(id) ON DELETE CASCADE,
-  followed_id UUID NOT NULL REFERENCES bb_agents(id) ON DELETE CASCADE,
+CREATE TABLE follows (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  follower_id UUID NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
+  followed_id UUID NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
   
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   
   UNIQUE(follower_id, followed_id)
 );
 
-CREATE INDEX idx_bb_follows_follower ON bb_follows(follower_id);
-CREATE INDEX idx_bb_follows_followed ON bb_follows(followed_id);
+CREATE INDEX idx_follows_follower ON follows(follower_id);
+CREATE INDEX idx_follows_followed ON follows(followed_id);
 
 -- ============================================
 -- SUBSCRIPTIONS (종목 구독)
 -- ============================================
-CREATE TABLE bb_subscriptions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  agent_id UUID NOT NULL REFERENCES bb_agents(id) ON DELETE CASCADE,
-  stock_id UUID NOT NULL REFERENCES bb_stocks(id) ON DELETE CASCADE,
+CREATE TABLE subscriptions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  agent_id UUID NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
+  stock_id UUID NOT NULL REFERENCES stocks(id) ON DELETE CASCADE,
   
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   
   UNIQUE(agent_id, stock_id)
 );
 
-CREATE INDEX idx_bb_subscriptions_agent ON bb_subscriptions(agent_id);
-CREATE INDEX idx_bb_subscriptions_stock ON bb_subscriptions(stock_id);
+CREATE INDEX idx_subscriptions_agent ON subscriptions(agent_id);
+CREATE INDEX idx_subscriptions_stock ON subscriptions(stock_id);
 
 -- ============================================
 -- TRADES (매매)
 -- ============================================
-CREATE TABLE bb_trades (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  agent_id UUID NOT NULL REFERENCES bb_agents(id) ON DELETE CASCADE,
-  stock_id UUID NOT NULL REFERENCES bb_stocks(id),
+CREATE TABLE trades (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  agent_id UUID NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
+  stock_id UUID NOT NULL REFERENCES stocks(id),
   
   -- Trade details
+  stock_symbol VARCHAR(16),
   trade_type VARCHAR(4) NOT NULL, -- buy, sell
   quantity INTEGER NOT NULL,
   price DECIMAL(15, 2) NOT NULL,
-  total_amount BIGINT NOT NULL, -- quantity * price
+  total_amount DECIMAL(15, 2) NOT NULL, -- quantity * price
   
   -- Result (for sell)
-  realized_profit BIGINT,
+  realized_profit DECIMAL(15, 2),
   profit_rate DECIMAL(10, 4),
   
   -- Timestamps
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX idx_bb_trades_agent ON bb_trades(agent_id);
-CREATE INDEX idx_bb_trades_stock ON bb_trades(stock_id);
-CREATE INDEX idx_bb_trades_created ON bb_trades(created_at DESC);
+CREATE INDEX idx_trades_agent ON trades(agent_id);
+CREATE INDEX idx_trades_stock ON trades(stock_id);
+CREATE INDEX idx_trades_created ON trades(created_at DESC);
 
 -- ============================================
 -- PORTFOLIO (보유 종목)
 -- ============================================
-CREATE TABLE bb_portfolio (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  agent_id UUID NOT NULL REFERENCES bb_agents(id) ON DELETE CASCADE,
-  stock_id UUID NOT NULL REFERENCES bb_stocks(id),
-  
+CREATE TABLE portfolios (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  agent_id UUID NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
+  stock_id UUID NOT NULL REFERENCES stocks(id),
+  stock_symbol VARCHAR(16),
+
   -- Position
   quantity INTEGER NOT NULL DEFAULT 0,
   avg_price DECIMAL(15, 2) NOT NULL DEFAULT 0,
-  total_cost BIGINT NOT NULL DEFAULT 0,
-  
+  total_cost DECIMAL(15, 2) NOT NULL DEFAULT 0,
+
   -- Timestamps
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  
+
   UNIQUE(agent_id, stock_id)
 );
 
-CREATE INDEX idx_bb_portfolio_agent ON bb_portfolio(agent_id);
+CREATE INDEX idx_portfolios_agent ON portfolios(agent_id);
 
 -- ============================================
 -- HELPER FUNCTIONS
@@ -244,7 +254,7 @@ CREATE INDEX idx_bb_portfolio_agent ON bb_portfolio(agent_id);
 CREATE OR REPLACE FUNCTION increment_follower_count(agent_id UUID)
 RETURNS VOID AS $$
 BEGIN
-  UPDATE bb_agents SET follower_count = follower_count + 1 WHERE id = agent_id;
+  UPDATE agents SET follower_count = follower_count + 1 WHERE id = agent_id;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -252,7 +262,7 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION decrement_follower_count(agent_id UUID)
 RETURNS VOID AS $$
 BEGIN
-  UPDATE bb_agents SET follower_count = GREATEST(follower_count - 1, 0) WHERE id = agent_id;
+  UPDATE agents SET follower_count = GREATEST(follower_count - 1, 0) WHERE id = agent_id;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -260,7 +270,7 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION increment_following_count(agent_id UUID)
 RETURNS VOID AS $$
 BEGIN
-  UPDATE bb_agents SET following_count = following_count + 1 WHERE id = agent_id;
+  UPDATE agents SET following_count = following_count + 1 WHERE id = agent_id;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -268,7 +278,7 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION decrement_following_count(agent_id UUID)
 RETURNS VOID AS $$
 BEGIN
-  UPDATE bb_agents SET following_count = GREATEST(following_count - 1, 0) WHERE id = agent_id;
+  UPDATE agents SET following_count = GREATEST(following_count - 1, 0) WHERE id = agent_id;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -276,7 +286,7 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION increment_subscriber_count(stock_id UUID)
 RETURNS VOID AS $$
 BEGIN
-  UPDATE bb_stocks SET subscriber_count = subscriber_count + 1 WHERE id = stock_id;
+  UPDATE stocks SET subscriber_count = subscriber_count + 1 WHERE id = stock_id;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -284,7 +294,7 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION decrement_subscriber_count(stock_id UUID)
 RETURNS VOID AS $$
 BEGIN
-  UPDATE bb_stocks SET subscriber_count = GREATEST(subscriber_count - 1, 0) WHERE id = stock_id;
+  UPDATE stocks SET subscriber_count = GREATEST(subscriber_count - 1, 0) WHERE id = stock_id;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -294,7 +304,7 @@ RETURNS INTEGER AS $$
 DECLARE
   new_karma INTEGER;
 BEGIN
-  UPDATE bb_agents SET karma = karma + delta WHERE id = agent_id RETURNING karma INTO new_karma;
+  UPDATE agents SET karma = karma + delta WHERE id = agent_id RETURNING karma INTO new_karma;
   RETURN new_karma;
 END;
 $$ LANGUAGE plpgsql;
@@ -310,7 +320,7 @@ DECLARE
 BEGIN
   score := ups - downs;
   order_val := LOG(GREATEST(ABS(score), 1));
-  
+
   IF score > 0 THEN
     sign := 1;
   ELSIF score < 0 THEN
@@ -318,9 +328,9 @@ BEGIN
   ELSE
     sign := 0;
   END IF;
-  
+
   seconds := EXTRACT(EPOCH FROM created_at) - 1134028003;
-  
+
   RETURN ROUND((sign * order_val + seconds / 45000)::DECIMAL, 6);
 END;
 $$ LANGUAGE plpgsql;
@@ -329,7 +339,7 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION update_post_hot_score()
 RETURNS TRIGGER AS $$
 BEGIN
-  UPDATE bb_posts 
+  UPDATE posts
   SET hot_score = calculate_hot_score(upvotes, downvotes, created_at)
   WHERE id = NEW.id OR id = OLD.id;
   RETURN NULL;
@@ -337,5 +347,260 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trigger_update_hot_score
-AFTER INSERT OR UPDATE OF upvotes, downvotes ON bb_posts
+AFTER INSERT OR UPDATE OF upvotes, downvotes ON posts
 FOR EACH ROW EXECUTE FUNCTION update_post_hot_score();
+
+-- Increment stock post count
+CREATE OR REPLACE FUNCTION increment_stock_post_count(stock_id UUID)
+RETURNS VOID AS $$
+BEGIN
+  UPDATE stocks SET post_count = post_count + 1 WHERE id = stock_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Increment comment count
+CREATE OR REPLACE FUNCTION increment_comment_count(post_id UUID)
+RETURNS VOID AS $$
+BEGIN
+  UPDATE posts SET comment_count = comment_count + 1 WHERE id = post_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Atomic buy trade
+CREATE OR REPLACE FUNCTION execute_buy_trade(
+  p_agent_id UUID,
+  p_stock_id UUID,
+  p_stock_symbol VARCHAR,
+  p_quantity INTEGER,
+  p_price DECIMAL(15,2)
+) RETURNS JSON AS $$
+DECLARE
+  v_total_amount DECIMAL(15,2);
+  v_balance DECIMAL(15,2);
+  v_trade_id UUID;
+  v_existing_qty INTEGER;
+  v_existing_avg DECIMAL(15,2);
+  v_new_qty INTEGER;
+  v_new_avg DECIMAL(15,2);
+  v_new_balance DECIMAL(15,2);
+  v_trade_count INTEGER;
+BEGIN
+  v_total_amount := ROUND(p_quantity * p_price, 2);
+  SELECT total_balance, trade_count INTO v_balance, v_trade_count
+  FROM agents WHERE id = p_agent_id FOR UPDATE;
+  IF v_balance < v_total_amount THEN
+    RETURN json_build_object('error', format('잔고가 부족합니다. (필요: $%s, 보유: $%s)', v_total_amount, v_balance));
+  END IF;
+  INSERT INTO trades (agent_id, stock_id, stock_symbol, trade_type, quantity, price, total_amount)
+  VALUES (p_agent_id, p_stock_id, p_stock_symbol, 'buy', p_quantity, p_price, v_total_amount)
+  RETURNING id INTO v_trade_id;
+  SELECT quantity, avg_price INTO v_existing_qty, v_existing_avg
+  FROM portfolios WHERE agent_id = p_agent_id AND stock_id = p_stock_id FOR UPDATE;
+  IF FOUND THEN
+    v_new_qty := v_existing_qty + p_quantity;
+    v_new_avg := ROUND((v_existing_avg * v_existing_qty + p_price * p_quantity) / v_new_qty, 2);
+    UPDATE portfolios SET quantity = v_new_qty, avg_price = v_new_avg, total_cost = ROUND(v_new_qty * v_new_avg, 2), updated_at = NOW()
+    WHERE agent_id = p_agent_id AND stock_id = p_stock_id;
+  ELSE
+    INSERT INTO portfolios (agent_id, stock_id, stock_symbol, quantity, avg_price, total_cost)
+    VALUES (p_agent_id, p_stock_id, p_stock_symbol, p_quantity, p_price, v_total_amount);
+  END IF;
+  v_new_balance := v_balance - v_total_amount;
+  UPDATE agents SET total_balance = v_new_balance, trade_count = v_trade_count + 1, last_active = NOW()
+  WHERE id = p_agent_id;
+  RETURN json_build_object('tradeId', v_trade_id, 'totalAmount', v_total_amount, 'newBalance', v_new_balance);
+END;
+$$ LANGUAGE plpgsql;
+
+-- Atomic vote on post (race-condition safe)
+CREATE OR REPLACE FUNCTION vote_on_post(
+  p_agent_id UUID,
+  p_post_id UUID,
+  p_value SMALLINT  -- 1 for upvote, -1 for downvote
+) RETURNS JSON AS $$
+DECLARE
+  v_existing_value SMALLINT;
+  v_existing_id UUID;
+  v_score_delta INTEGER := 0;
+  v_upvotes_delta INTEGER := 0;
+  v_downvotes_delta INTEGER := 0;
+  v_author_id UUID;
+  v_new_score INTEGER;
+  v_user_vote TEXT;
+BEGIN
+  -- Lock the post row
+  SELECT id, author_id, score INTO v_author_id, v_author_id, v_new_score
+  FROM posts WHERE id = p_post_id AND is_deleted = FALSE FOR UPDATE;
+  IF NOT FOUND THEN
+    RETURN json_build_object('error', '게시글을 찾을 수 없습니다.');
+  END IF;
+  SELECT author_id INTO v_author_id FROM posts WHERE id = p_post_id;
+
+  -- Check existing vote
+  SELECT id, value INTO v_existing_id, v_existing_value
+  FROM votes WHERE agent_id = p_agent_id AND target_id = p_post_id AND target_type = 'post'
+  FOR UPDATE;
+
+  IF FOUND THEN
+    IF v_existing_value = p_value THEN
+      -- Same vote → remove (toggle off)
+      DELETE FROM votes WHERE id = v_existing_id;
+      v_score_delta := -p_value;
+      IF p_value = 1 THEN v_upvotes_delta := -1; ELSE v_downvotes_delta := -1; END IF;
+      v_user_vote := NULL;
+    ELSE
+      -- Opposite vote → flip
+      UPDATE votes SET value = p_value WHERE id = v_existing_id;
+      v_score_delta := 2 * p_value;
+      IF p_value = 1 THEN v_upvotes_delta := 1; v_downvotes_delta := -1;
+      ELSE v_upvotes_delta := -1; v_downvotes_delta := 1; END IF;
+      v_user_vote := CASE WHEN p_value = 1 THEN 'up' ELSE 'down' END;
+    END IF;
+  ELSE
+    -- New vote
+    INSERT INTO votes (agent_id, target_id, target_type, value)
+    VALUES (p_agent_id, p_post_id, 'post', p_value);
+    v_score_delta := p_value;
+    IF p_value = 1 THEN v_upvotes_delta := 1; ELSE v_downvotes_delta := 1; END IF;
+    v_user_vote := CASE WHEN p_value = 1 THEN 'up' ELSE 'down' END;
+  END IF;
+
+  -- Atomic score update
+  UPDATE posts SET
+    score = score + v_score_delta,
+    upvotes = upvotes + v_upvotes_delta,
+    downvotes = downvotes + v_downvotes_delta
+  WHERE id = p_post_id
+  RETURNING score INTO v_new_score;
+
+  -- Update author karma
+  PERFORM update_karma(v_author_id, v_score_delta);
+
+  RETURN json_build_object('score', v_new_score, 'userVote', v_user_vote);
+END;
+$$ LANGUAGE plpgsql;
+
+-- Atomic vote on comment (race-condition safe)
+CREATE OR REPLACE FUNCTION vote_on_comment(
+  p_agent_id UUID,
+  p_comment_id UUID,
+  p_value SMALLINT  -- 1 for upvote, -1 for downvote
+) RETURNS JSON AS $$
+DECLARE
+  v_existing_value SMALLINT;
+  v_existing_id UUID;
+  v_score_delta INTEGER := 0;
+  v_upvotes_delta INTEGER := 0;
+  v_downvotes_delta INTEGER := 0;
+  v_author_id UUID;
+  v_new_score INTEGER;
+  v_user_vote TEXT;
+BEGIN
+  -- Lock the comment row
+  SELECT author_id INTO v_author_id
+  FROM comments WHERE id = p_comment_id AND is_deleted = FALSE FOR UPDATE;
+  IF NOT FOUND THEN
+    RETURN json_build_object('error', '댓글을 찾을 수 없습니다.');
+  END IF;
+
+  -- Check existing vote
+  SELECT id, value INTO v_existing_id, v_existing_value
+  FROM votes WHERE agent_id = p_agent_id AND target_id = p_comment_id AND target_type = 'comment'
+  FOR UPDATE;
+
+  IF FOUND THEN
+    IF v_existing_value = p_value THEN
+      -- Same vote → remove (toggle off)
+      DELETE FROM votes WHERE id = v_existing_id;
+      v_score_delta := -p_value;
+      IF p_value = 1 THEN v_upvotes_delta := -1; ELSE v_downvotes_delta := -1; END IF;
+      v_user_vote := NULL;
+    ELSE
+      -- Opposite vote → flip
+      UPDATE votes SET value = p_value WHERE id = v_existing_id;
+      v_score_delta := 2 * p_value;
+      IF p_value = 1 THEN v_upvotes_delta := 1; v_downvotes_delta := -1;
+      ELSE v_upvotes_delta := -1; v_downvotes_delta := 1; END IF;
+      v_user_vote := CASE WHEN p_value = 1 THEN 'up' ELSE 'down' END;
+    END IF;
+  ELSE
+    -- New vote
+    INSERT INTO votes (agent_id, target_id, target_type, value)
+    VALUES (p_agent_id, p_comment_id, 'comment', p_value);
+    v_score_delta := p_value;
+    IF p_value = 1 THEN v_upvotes_delta := 1; ELSE v_downvotes_delta := 1; END IF;
+    v_user_vote := CASE WHEN p_value = 1 THEN 'up' ELSE 'down' END;
+  END IF;
+
+  -- Atomic score update
+  UPDATE comments SET
+    score = score + v_score_delta,
+    upvotes = upvotes + v_upvotes_delta,
+    downvotes = downvotes + v_downvotes_delta
+  WHERE id = p_comment_id
+  RETURNING score INTO v_new_score;
+
+  -- Update author karma
+  PERFORM update_karma(v_author_id, v_score_delta);
+
+  RETURN json_build_object('score', v_new_score, 'userVote', v_user_vote);
+END;
+$$ LANGUAGE plpgsql;
+
+-- Atomic sell trade
+CREATE OR REPLACE FUNCTION execute_sell_trade(
+  p_agent_id UUID,
+  p_stock_id UUID,
+  p_stock_symbol VARCHAR,
+  p_quantity INTEGER,
+  p_price DECIMAL(15,2)
+) RETURNS JSON AS $$
+DECLARE
+  v_total_amount DECIMAL(15,2);
+  v_balance DECIMAL(15,2);
+  v_trade_id UUID;
+  v_existing_qty INTEGER;
+  v_existing_avg DECIMAL(15,2);
+  v_new_qty INTEGER;
+  v_realized_profit DECIMAL(15,2);
+  v_profit_rate DECIMAL(10,4);
+  v_new_balance DECIMAL(15,2);
+  v_trade_count INTEGER;
+  v_win_count INTEGER;
+  v_total_pnl DECIMAL(15,2);
+  v_new_pnl DECIMAL(15,2);
+  v_new_profit_rate DECIMAL(10,4);
+  v_is_win BOOLEAN;
+BEGIN
+  v_total_amount := ROUND(p_quantity * p_price, 2);
+  SELECT total_balance, trade_count, win_count, total_profit_loss
+  INTO v_balance, v_trade_count, v_win_count, v_total_pnl
+  FROM agents WHERE id = p_agent_id FOR UPDATE;
+  SELECT quantity, avg_price INTO v_existing_qty, v_existing_avg
+  FROM portfolios WHERE agent_id = p_agent_id AND stock_id = p_stock_id FOR UPDATE;
+  IF NOT FOUND OR v_existing_qty < p_quantity THEN
+    RETURN json_build_object('error', format('보유 수량이 부족합니다. (보유: %s주, 매도 요청: %s주)', COALESCE(v_existing_qty, 0), p_quantity));
+  END IF;
+  v_realized_profit := ROUND((p_price - v_existing_avg) * p_quantity, 2);
+  v_profit_rate := ROUND(((p_price - v_existing_avg) / v_existing_avg) * 100, 4);
+  v_is_win := v_realized_profit > 0;
+  INSERT INTO trades (agent_id, stock_id, stock_symbol, trade_type, quantity, price, total_amount, realized_profit, profit_rate)
+  VALUES (p_agent_id, p_stock_id, p_stock_symbol, 'sell', p_quantity, p_price, v_total_amount, v_realized_profit, v_profit_rate)
+  RETURNING id INTO v_trade_id;
+  v_new_qty := v_existing_qty - p_quantity;
+  IF v_new_qty = 0 THEN
+    DELETE FROM portfolios WHERE agent_id = p_agent_id AND stock_id = p_stock_id;
+  ELSE
+    UPDATE portfolios SET quantity = v_new_qty, total_cost = ROUND(v_new_qty * v_existing_avg, 2), updated_at = NOW()
+    WHERE agent_id = p_agent_id AND stock_id = p_stock_id;
+  END IF;
+  v_new_balance := v_balance + v_total_amount;
+  v_new_pnl := v_total_pnl + v_realized_profit;
+  v_new_profit_rate := ROUND((v_new_pnl / 100000) * 100, 4);
+  UPDATE agents SET total_balance = v_new_balance, total_profit_loss = v_new_pnl, profit_rate = v_new_profit_rate,
+    trade_count = v_trade_count + 1, win_count = CASE WHEN v_is_win THEN v_win_count + 1 ELSE v_win_count END, last_active = NOW()
+  WHERE id = p_agent_id;
+  RETURN json_build_object('tradeId', v_trade_id, 'totalAmount', v_total_amount, 'realizedProfit', v_realized_profit,
+    'profitRate', v_profit_rate, 'newBalance', v_new_balance);
+END;
+$$ LANGUAGE plpgsql;

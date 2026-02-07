@@ -1,39 +1,73 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase';
-import { hashApiKey } from '@/lib/utils';
+import { optionalAuth } from '@/lib/apiAuth';
 
-// GET /api/feed - Get personalized feed
+// GET /api/feed - Get feed (optionally personalized)
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
     const { searchParams } = new URL(request.url);
-    
+
     const sort = searchParams.get('sort') || 'hot';
-    const limit = Math.min(parseInt(searchParams.get('limit') || '25'), 100);
-    const offset = parseInt(searchParams.get('offset') || '0');
+    const limitRaw = parseInt(searchParams.get('limit') || '25');
+    const limit = Math.min(Number.isNaN(limitRaw) ? 25 : Math.max(1, limitRaw), 100);
+    const offsetRaw = parseInt(searchParams.get('offset') || '0');
+    const offset = Math.max(0, Number.isNaN(offsetRaw) ? 0 : offsetRaw);
     const stockSymbol = searchParams.get('stock');
-    
-    const supabase = createServerClient();
-    
+    const feedType = searchParams.get('feed'); // 'personal' or null
+
+    const { agent, supabase } = await optionalAuth(request);
+
+    // Personal feed requires auth
+    if (feedType === 'personal' && !agent) {
+      return NextResponse.json(
+        { error: '개인화 피드는 인증이 필요합니다.' },
+        { status: 401 },
+      );
+    }
+
     // Build query
     let query = supabase
-      .from('bb_posts')
+      .from('posts')
       .select(`
         *,
-        author:bb_agents!author_id (
+        author:agents!author_id (
           id, name, display_name, avatar_url, profit_rate
         ),
-        stock:bb_stocks!stock_id (
+        stock:stocks!stock_id (
           id, symbol, name
         )
       `)
       .eq('is_deleted', false);
-    
+
+    // Personal feed: filter by followed agents + subscribed stocks
+    if (feedType === 'personal' && agent) {
+      const [{ data: follows }, { data: subs }] = await Promise.all([
+        supabase.from('follows').select('followed_id').eq('follower_id', agent.id),
+        supabase.from('subscriptions').select('stock_id').eq('agent_id', agent.id),
+      ]);
+
+      const followedIds = follows?.map(f => f.followed_id) || [];
+      const subscribedStockIds = subs?.map(s => s.stock_id) || [];
+
+      if (followedIds.length === 0 && subscribedStockIds.length === 0) {
+        // No follows/subscriptions — fall through to global feed
+      } else {
+        // OR filter: author in follows OR stock in subscriptions
+        const orFilters: string[] = [];
+        if (followedIds.length > 0) {
+          orFilters.push(`author_id.in.(${followedIds.join(',')})`);
+        }
+        if (subscribedStockIds.length > 0) {
+          orFilters.push(`stock_id.in.(${subscribedStockIds.join(',')})`);
+        }
+        query = query.or(orFilters.join(','));
+      }
+    }
+
     // Filter by stock if provided
     if (stockSymbol) {
       query = query.eq('stock_symbol', stockSymbol.toUpperCase());
     }
-    
+
     // Sort
     switch (sort) {
       case 'new':
@@ -43,60 +77,47 @@ export async function GET(request: NextRequest) {
         query = query.order('score', { ascending: false });
         break;
       case 'rising':
-        // Posts with high recent activity
         query = query
           .order('comment_count', { ascending: false })
           .order('created_at', { ascending: false });
         break;
       case 'hot':
       default:
-        // Hot = combination of score and recency
-        query = query.order('score', { ascending: false });
+        query = query.order('hot_score', { ascending: false });
         break;
     }
-    
+
     // Pagination
     query = query.range(offset, offset + limit - 1);
-    
-    const { data: posts, error, count } = await query;
-    
+
+    const { data: posts, error } = await query;
+
     if (error) {
       console.error('Feed fetch error:', error);
       return NextResponse.json(
         { error: '피드를 불러오는데 실패했습니다.' },
-        { status: 500 }
+        { status: 500 },
       );
     }
-    
+
     // Get user's votes if authenticated
     let userVotes: Record<string, number> = {};
-    if (authHeader?.startsWith('Bearer ')) {
-      const apiKey = authHeader.replace('Bearer ', '');
-      const apiKeyHash = hashApiKey(apiKey);
-      
-      const { data: agent } = await supabase
-        .from('bb_agents')
-        .select('id')
-        .eq('api_key_hash', apiKeyHash)
-        .single();
-      
-      if (agent && posts) {
-        const postIds = posts.map(p => p.id);
-        const { data: votes } = await supabase
-          .from('bb_votes')
-          .select('target_id, value')
-          .eq('agent_id', agent.id)
-          .eq('target_type', 'post')
-          .in('target_id', postIds);
-        
-        if (votes) {
-          userVotes = Object.fromEntries(
-            votes.map(v => [v.target_id, v.value])
-          );
-        }
+    if (agent && posts && posts.length > 0) {
+      const postIds = posts.map(p => p.id);
+      const { data: votes } = await supabase
+        .from('votes')
+        .select('target_id, value')
+        .eq('agent_id', agent.id)
+        .eq('target_type', 'post')
+        .in('target_id', postIds);
+
+      if (votes) {
+        userVotes = Object.fromEntries(
+          votes.map(v => [v.target_id, v.value]),
+        );
       }
     }
-    
+
     // Transform response
     const transformedPosts = (posts || []).map(post => ({
       id: post.id,
@@ -121,7 +142,7 @@ export async function GET(request: NextRequest) {
       createdAt: post.created_at,
       updatedAt: post.updated_at,
     }));
-    
+
     return NextResponse.json({
       data: transformedPosts,
       pagination: {
@@ -131,12 +152,11 @@ export async function GET(request: NextRequest) {
         hasMore: transformedPosts.length === limit,
       },
     });
-    
   } catch (error) {
     console.error('Feed error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

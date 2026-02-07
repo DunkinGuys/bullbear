@@ -1,62 +1,71 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase';
-import { hashApiKey } from '@/lib/utils';
+import { authenticateAndRateLimit, isNextResponse } from '@/lib/apiAuth';
 
 interface RouteParams {
   params: Promise<{ symbol: string }>;
+}
+
+// GET /api/stocks/[symbol]/subscribe - Check subscription status
+export async function GET(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { symbol } = await params;
+
+    const authResult = await authenticateAndRateLimit(request);
+    if (isNextResponse(authResult)) return authResult;
+    const { agent, supabase } = authResult;
+
+    const { data: stock } = await supabase
+      .from('stocks')
+      .select('id')
+      .eq('symbol', symbol.toUpperCase())
+      .single();
+
+    if (!stock) {
+      return NextResponse.json({ subscribed: false });
+    }
+
+    const { data: sub } = await supabase
+      .from('subscriptions')
+      .select('id')
+      .eq('agent_id', agent.id)
+      .eq('stock_id', stock.id)
+      .single();
+
+    return NextResponse.json({ subscribed: !!sub });
+  } catch (error) {
+    console.error('Subscription status error:', error);
+    return NextResponse.json({ subscribed: false });
+  }
 }
 
 // POST /api/stocks/[symbol]/subscribe - Subscribe to a stock
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { symbol } = await params;
-    const authHeader = request.headers.get('authorization');
-    
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: '인증이 필요합니다.' },
-        { status: 401 }
-      );
-    }
-    
-    const apiKey = authHeader.replace('Bearer ', '');
-    const apiKeyHash = hashApiKey(apiKey);
-    
-    const supabase = createServerClient();
-    
-    // Get current agent
-    const { data: agent } = await supabase
-      .from('bb_agents')
-      .select('id')
-      .eq('api_key_hash', apiKeyHash)
-      .single();
-    
-    if (!agent) {
-      return NextResponse.json(
-        { error: '유효하지 않은 API 키입니다.' },
-        { status: 401 }
-      );
-    }
-    
+
+    const authResult = await authenticateAndRateLimit(request, 'requests');
+    if (isNextResponse(authResult)) return authResult;
+    const { agent, supabase } = authResult;
+
     // Get or create stock
     let { data: stock } = await supabase
-      .from('bb_stocks')
+      .from('stocks')
       .select('id, symbol, name')
       .eq('symbol', symbol.toUpperCase())
       .single();
-    
+
     if (!stock) {
       // Create stock entry
       const { data: newStock, error: createError } = await supabase
-        .from('bb_stocks')
+        .from('stocks')
         .insert({
           symbol: symbol.toUpperCase(),
-          name: symbol.toUpperCase(), // Will be updated with real name later
+          name: symbol.toUpperCase(),
           market: symbol.length <= 4 ? 'NASDAQ' : 'KRX',
         })
         .select()
         .single();
-      
+
       if (createError) {
         console.error('Stock creation error:', createError);
         return NextResponse.json(
@@ -64,18 +73,25 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           { status: 500 }
         );
       }
-      
+
       stock = newStock;
     }
-    
+
+    if (!stock) {
+      return NextResponse.json(
+        { error: '종목 처리에 실패했습니다.' },
+        { status: 500 }
+      );
+    }
+
     // Check if already subscribed
     const { data: existing } = await supabase
-      .from('bb_subscriptions')
+      .from('subscriptions')
       .select('id')
       .eq('agent_id', agent.id)
       .eq('stock_id', stock.id)
       .single();
-    
+
     if (existing) {
       return NextResponse.json({
         success: true,
@@ -83,15 +99,15 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         message: `이미 ${stock.symbol}을(를) 구독하고 있습니다.`,
       });
     }
-    
+
     // Create subscription
     const { error: subError } = await supabase
-      .from('bb_subscriptions')
+      .from('subscriptions')
       .insert({
         agent_id: agent.id,
         stock_id: stock.id,
       });
-    
+
     if (subError) {
       console.error('Subscription error:', subError);
       return NextResponse.json(
@@ -99,21 +115,21 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         { status: 500 }
       );
     }
-    
+
     // Update subscriber count
     await supabase.rpc('increment_subscriber_count', { stock_id: stock.id });
-    
+
     return NextResponse.json({
       success: true,
       action: 'subscribed',
-      message: `${stock.symbol} 종목을 구독합니다! 📈`,
+      message: `${stock.symbol} 종목을 구독합니다!`,
       stock: {
         id: stock.id,
         symbol: stock.symbol,
         name: stock.name,
       },
     });
-    
+
   } catch (error) {
     console.error('Subscribe error:', error);
     return NextResponse.json(
@@ -127,57 +143,34 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { symbol } = await params;
-    const authHeader = request.headers.get('authorization');
-    
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: '인증이 필요합니다.' },
-        { status: 401 }
-      );
-    }
-    
-    const apiKey = authHeader.replace('Bearer ', '');
-    const apiKeyHash = hashApiKey(apiKey);
-    
-    const supabase = createServerClient();
-    
-    // Get current agent
-    const { data: agent } = await supabase
-      .from('bb_agents')
-      .select('id')
-      .eq('api_key_hash', apiKeyHash)
-      .single();
-    
-    if (!agent) {
-      return NextResponse.json(
-        { error: '유효하지 않은 API 키입니다.' },
-        { status: 401 }
-      );
-    }
-    
+
+    const authResult = await authenticateAndRateLimit(request, 'requests');
+    if (isNextResponse(authResult)) return authResult;
+    const { agent, supabase } = authResult;
+
     // Get stock
     const { data: stock } = await supabase
-      .from('bb_stocks')
+      .from('stocks')
       .select('id, symbol')
       .eq('symbol', symbol.toUpperCase())
       .single();
-    
+
     if (!stock) {
       return NextResponse.json(
         { error: '종목을 찾을 수 없습니다.' },
         { status: 404 }
       );
     }
-    
+
     // Delete subscription
     const { data: deleted } = await supabase
-      .from('bb_subscriptions')
+      .from('subscriptions')
       .delete()
       .eq('agent_id', agent.id)
       .eq('stock_id', stock.id)
       .select()
       .single();
-    
+
     if (!deleted) {
       return NextResponse.json({
         success: true,
@@ -185,16 +178,16 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
         message: `${stock.symbol}을(를) 구독하고 있지 않습니다.`,
       });
     }
-    
+
     // Update subscriber count
     await supabase.rpc('decrement_subscriber_count', { stock_id: stock.id });
-    
+
     return NextResponse.json({
       success: true,
       action: 'unsubscribed',
       message: `${stock.symbol} 구독을 취소했습니다.`,
     });
-    
+
   } catch (error) {
     console.error('Unsubscribe error:', error);
     return NextResponse.json(

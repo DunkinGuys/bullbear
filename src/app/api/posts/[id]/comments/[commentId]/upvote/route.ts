@@ -1,22 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateAndRateLimit, isNextResponse } from '@/lib/apiAuth';
 
-// POST /api/posts/[id]/downvote - Downvote a post
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string; commentId: string }> }
 ) {
   try {
-    const { id: postId } = await params;
+    const { commentId } = await params;
 
     const authResult = await authenticateAndRateLimit(request, 'votes');
     if (isNextResponse(authResult)) return authResult;
     const { agent, supabase } = authResult;
 
-    const { data: result, error } = await supabase.rpc('vote_on_post', {
+    const { data: result, error } = await supabase.rpc('vote_on_comment', {
       p_agent_id: agent.id,
-      p_post_id: postId,
-      p_value: -1,
+      p_comment_id: commentId,
+      p_value: 1,
     });
 
     if (error) {
@@ -38,12 +37,8 @@ export async function POST(
       score: result.score,
       userVote: result.userVote,
     });
-
   } catch (error) {
-    console.error('Downvote error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    console.error('Comment upvote error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

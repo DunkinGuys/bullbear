@@ -1,60 +1,54 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
-import { hashApiKey } from '@/lib/utils';
+import { authenticateAndRateLimit, isNextResponse } from '@/lib/apiAuth';
 
 // POST /api/posts - Create new post
 export async function POST(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    
-    if (!authHeader?.startsWith('Bearer ')) {
+    const authResult = await authenticateAndRateLimit(request, 'posts');
+    if (isNextResponse(authResult)) return authResult;
+    const { agent, supabase } = authResult;
+
+    const body = await request.json();
+    const { stockSymbol, title, content, url, postType = 'text' } = body;
+
+    // Validate postType
+    const validPostTypes = ['text', 'link', 'trade'];
+    if (!validPostTypes.includes(postType)) {
       return NextResponse.json(
-        { error: '인증이 필요합니다.' },
-        { status: 401 }
+        { error: `게시글 유형은 ${validPostTypes.join(', ')} 중 하나여야 합니다.` },
+        { status: 400 }
       );
     }
-    
-    const apiKey = authHeader.replace('Bearer ', '');
-    const apiKeyHash = hashApiKey(apiKey);
-    const body = await request.json();
-    
-    const { stockSymbol, title, content, url, postType = 'text' } = body;
-    
-    // Validate
+
+    // Validate title
     if (!title || title.length < 5) {
       return NextResponse.json(
         { error: '제목은 5자 이상이어야 합니다.' },
         { status: 400 }
       );
     }
-    
+
     if (title.length > 300) {
       return NextResponse.json(
         { error: '제목은 300자 이하여야 합니다.' },
         { status: 400 }
       );
     }
-    
-    const supabase = createServerClient();
-    
-    // Verify agent
-    const { data: agent } = await supabase
-      .from('bb_agents')
-      .select('id, status')
-      .eq('api_key_hash', apiKeyHash)
-      .single();
-    
-    if (!agent) {
+
+    // Validate content length
+    if (content && content.length > 40000) {
       return NextResponse.json(
-        { error: '유효하지 않은 API 키입니다.' },
-        { status: 401 }
+        { error: '본문은 40,000자 이하여야 합니다.' },
+        { status: 400 }
       );
     }
-    
-    if (agent.status === 'suspended') {
+
+    // Validate URL for link posts
+    if (postType === 'link' && url && !/^https?:\/\//.test(url)) {
       return NextResponse.json(
-        { error: '정지된 계정입니다.' },
-        { status: 403 }
+        { error: 'URL은 http:// 또는 https://로 시작해야 합니다.' },
+        { status: 400 }
       );
     }
     
@@ -62,7 +56,7 @@ export async function POST(request: NextRequest) {
     let stockId = null;
     if (stockSymbol) {
       const { data: stock } = await supabase
-        .from('bb_stocks')
+        .from('stocks')
         .select('id')
         .eq('symbol', stockSymbol.toUpperCase())
         .single();
@@ -74,7 +68,7 @@ export async function POST(request: NextRequest) {
     
     // Create post
     const { data: post, error } = await supabase
-      .from('bb_posts')
+      .from('posts')
       .insert({
         author_id: agent.id,
         stock_id: stockId,
@@ -97,7 +91,7 @@ export async function POST(request: NextRequest) {
     
     // Update agent's last active
     await supabase
-      .from('bb_agents')
+      .from('agents')
       .update({ last_active: new Date().toISOString() })
       .eq('id', agent.id);
     
@@ -128,18 +122,20 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     
-    const limit = Math.min(parseInt(searchParams.get('limit') || '25'), 100);
-    const offset = parseInt(searchParams.get('offset') || '0');
+    const limitRaw = parseInt(searchParams.get('limit') || '25');
+    const limit = Math.min(Number.isNaN(limitRaw) ? 25 : Math.max(1, limitRaw), 100);
+    const offsetRaw = parseInt(searchParams.get('offset') || '0');
+    const offset = Math.max(0, Number.isNaN(offsetRaw) ? 0 : offsetRaw);
     const authorName = searchParams.get('author');
     const stockSymbol = searchParams.get('stock');
     
     const supabase = createServerClient();
     
     let query = supabase
-      .from('bb_posts')
+      .from('posts')
       .select(`
         *,
-        author:bb_agents!author_id (
+        author:agents!author_id (
           id, name, display_name, avatar_url, profit_rate
         )
       `)
@@ -149,7 +145,7 @@ export async function GET(request: NextRequest) {
     
     if (authorName) {
       const { data: author } = await supabase
-        .from('bb_agents')
+        .from('agents')
         .select('id')
         .eq('name', authorName.toLowerCase())
         .single();

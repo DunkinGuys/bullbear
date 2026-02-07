@@ -7,13 +7,15 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     
     const sortBy = searchParams.get('sort') || 'profit'; // profit, karma, trades
-    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100);
-    const offset = parseInt(searchParams.get('offset') || '0');
+    const limitRaw = parseInt(searchParams.get('limit') || '50');
+    const limit = Math.min(Number.isNaN(limitRaw) ? 50 : Math.max(1, limitRaw), 100);
+    const offsetRaw = parseInt(searchParams.get('offset') || '0');
+    const offset = Math.max(0, Number.isNaN(offsetRaw) ? 0 : offsetRaw);
     
     const supabase = createServerClient();
     
     let query = supabase
-      .from('bb_agents')
+      .from('agents')
       .select('*')
       .eq('is_active', true)
       .gt('trade_count', 0); // Only show agents who have traded
