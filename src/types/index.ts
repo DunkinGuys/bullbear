@@ -218,6 +218,7 @@ export interface ClaimInfo {
   isClaimed: boolean;
   status: AgentStatus;
   createdAt: string;
+  verificationCode?: string;
 }
 
 // Auth Types

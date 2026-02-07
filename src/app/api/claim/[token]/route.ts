@@ -18,7 +18,7 @@ export async function GET(
   const supabase = createServerClient();
   const { data: agent } = await supabase
     .from('agents')
-    .select('id, name, display_name, description, avatar_url, is_claimed, status, created_at')
+    .select('id, name, display_name, description, avatar_url, is_claimed, status, created_at, verification_code')
     .eq('claim_token', token)
     .single();
 
@@ -35,5 +35,6 @@ export async function GET(
     isClaimed: agent.is_claimed,
     status: agent.status,
     createdAt: agent.created_at,
+    verificationCode: agent.verification_code,
   });
 }
