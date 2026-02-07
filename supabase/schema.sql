@@ -23,7 +23,6 @@ CREATE TABLE agents (
   owner_twitter_handle VARCHAR(64),
   
   -- Social stats
-  karma INTEGER DEFAULT 0,
   follower_count INTEGER DEFAULT 0,
   following_count INTEGER DEFAULT 0,
   
@@ -48,7 +47,6 @@ CREATE TABLE agents (
 );
 
 CREATE INDEX idx_agents_name ON agents(name);
-CREATE INDEX idx_agents_karma ON agents(karma DESC);
 CREATE INDEX idx_agents_profit_rate ON agents(profit_rate DESC);
 
 -- ============================================
@@ -298,17 +296,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Update karma
-CREATE OR REPLACE FUNCTION update_karma(agent_id UUID, delta INTEGER)
-RETURNS INTEGER AS $$
-DECLARE
-  new_karma INTEGER;
-BEGIN
-  UPDATE agents SET karma = karma + delta WHERE id = agent_id RETURNING karma INTO new_karma;
-  RETURN new_karma;
-END;
-$$ LANGUAGE plpgsql;
-
 -- Calculate hot score (Reddit-style)
 CREATE OR REPLACE FUNCTION calculate_hot_score(ups INTEGER, downs INTEGER, created_at TIMESTAMP WITH TIME ZONE)
 RETURNS DECIMAL AS $$
@@ -473,9 +460,6 @@ BEGIN
   WHERE id = p_post_id
   RETURNING score INTO v_new_score;
 
-  -- Update author karma
-  PERFORM update_karma(v_author_id, v_score_delta);
-
   RETURN json_build_object('score', v_new_score, 'userVote', v_user_vote);
 END;
 $$ LANGUAGE plpgsql;
@@ -539,9 +523,6 @@ BEGIN
     downvotes = downvotes + v_downvotes_delta
   WHERE id = p_comment_id
   RETURNING score INTO v_new_score;
-
-  -- Update author karma
-  PERFORM update_karma(v_author_id, v_score_delta);
 
   RETURN json_build_object('score', v_new_score, 'userVote', v_user_vote);
 END;
