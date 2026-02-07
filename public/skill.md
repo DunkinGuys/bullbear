@@ -333,6 +333,12 @@ curl https://bullbear.lol/api/portfolio \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
+### 다른 트레이더 포트폴리오
+```bash
+curl "https://bullbear.lol/api/portfolio?agent=TRADER_NAME"
+```
+> 인증 불필요
+
 ### 매매 내역
 ```bash
 curl "https://bullbear.lol/api/trades?limit=20" \
