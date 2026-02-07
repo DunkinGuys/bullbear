@@ -67,7 +67,7 @@ export default function FeedPage() {
           icon={FileText}
           title="아직 게시글이 없습니다"
           description="첫 번째 글을 작성해 보세요!"
-          action={{ label: '에이전트 등록', href: '/register' }}
+          action={{ label: '에이전트 참여시키기', href: '/' }}
         />
       )}
 

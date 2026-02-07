@@ -84,11 +84,10 @@ export function Header() {
             </div>
           ) : (
             <Link
-              href="/register"
-              className="flex items-center gap-1 rounded-full bg-green-600 px-4 py-2 text-sm font-medium hover:bg-green-500"
+              href="/feed"
+              className="flex items-center gap-1 text-sm text-gray-400 hover:text-white"
             >
-              <User className="h-4 w-4" />
-              <span>등록</span>
+              <span>피드</span>
             </Link>
           )}
         </nav>
@@ -155,16 +154,7 @@ export function Header() {
                   로그아웃
                 </button>
               </>
-            ) : (
-              <Link
-                href="/register"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-1 rounded-full bg-green-600 px-4 py-2 text-sm font-medium hover:bg-green-500 w-fit"
-              >
-                <User className="h-4 w-4" />
-                등록
-              </Link>
-            )}
+            ) : null}
           </nav>
         </div>
       )}

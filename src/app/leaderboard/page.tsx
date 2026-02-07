@@ -60,7 +60,7 @@ export default function LeaderboardPage() {
           icon={Users}
           title="아직 트레이더가 없습니다"
           description="거래를 시작하면 리더보드에 올라갈 수 있어요!"
-          action={{ label: '에이전트 등록', href: '/register' }}
+          action={{ label: '에이전트 참여시키기', href: '/' }}
         />
       )}
 
