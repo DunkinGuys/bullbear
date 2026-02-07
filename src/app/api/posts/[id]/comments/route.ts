@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase';
-import { hashApiKey } from '@/lib/utils';
+import { authenticateAndRateLimit, isNextResponse, optionalAuth } from '@/lib/apiAuth';
 
 // GET /api/posts/[id]/comments - Get comments for a post
 export async function GET(
@@ -9,40 +8,39 @@ export async function GET(
 ) {
   try {
     const { id: postId } = await params;
-    const authHeader = request.headers.get('authorization');
     const { searchParams } = new URL(request.url);
-    
+
     const sort = searchParams.get('sort') || 'top';
-    
-    const supabase = createServerClient();
-    
+
+    const { agent, supabase } = await optionalAuth(request);
+
     // Check if post exists
     const { data: post } = await supabase
-      .from('bb_posts')
+      .from('posts')
       .select('id')
       .eq('id', postId)
       .eq('is_deleted', false)
       .single();
-    
+
     if (!post) {
       return NextResponse.json(
         { error: '게시글을 찾을 수 없습니다.' },
         { status: 404 }
       );
     }
-    
+
     // Get comments
     let query = supabase
-      .from('bb_comments')
+      .from('comments')
       .select(`
         *,
-        author:bb_agents!author_id (
+        author:agents!author_id (
           id, name, display_name, avatar_url
         )
       `)
       .eq('post_id', postId)
       .eq('is_deleted', false);
-    
+
     // Sort
     switch (sort) {
       case 'new':
@@ -56,9 +54,9 @@ export async function GET(
         query = query.order('score', { ascending: false });
         break;
     }
-    
+
     const { data: comments, error } = await query;
-    
+
     if (error) {
       console.error('Comments fetch error:', error);
       return NextResponse.json(
@@ -66,33 +64,22 @@ export async function GET(
         { status: 500 }
       );
     }
-    
+
     // Get user's votes if authenticated
     let userVotes: Record<string, number> = {};
-    if (authHeader?.startsWith('Bearer ')) {
-      const apiKey = authHeader.replace('Bearer ', '');
-      const apiKeyHash = hashApiKey(apiKey);
-      
-      const { data: agent } = await supabase
-        .from('bb_agents')
-        .select('id')
-        .eq('api_key_hash', apiKeyHash)
-        .single();
-      
-      if (agent && comments) {
-        const commentIds = comments.map(c => c.id);
-        const { data: votes } = await supabase
-          .from('bb_votes')
-          .select('target_id, value')
-          .eq('agent_id', agent.id)
-          .eq('target_type', 'comment')
-          .in('target_id', commentIds);
-        
-        if (votes) {
-          userVotes = Object.fromEntries(
-            votes.map(v => [v.target_id, v.value])
-          );
-        }
+    if (agent && comments && comments.length > 0) {
+      const commentIds = comments.map(c => c.id);
+      const { data: votes } = await supabase
+        .from('votes')
+        .select('target_id, value')
+        .eq('agent_id', agent.id)
+        .eq('target_type', 'comment')
+        .in('target_id', commentIds);
+
+      if (votes) {
+        userVotes = Object.fromEntries(
+          votes.map(v => [v.target_id, v.value])
+        );
       }
     }
     
@@ -155,21 +142,14 @@ export async function POST(
 ) {
   try {
     const { id: postId } = await params;
-    const authHeader = request.headers.get('authorization');
-    
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: '인증이 필요합니다.' },
-        { status: 401 }
-      );
-    }
-    
-    const apiKey = authHeader.replace('Bearer ', '');
-    const apiKeyHash = hashApiKey(apiKey);
+
+    const authResult = await authenticateAndRateLimit(request, 'comments');
+    if (isNextResponse(authResult)) return authResult;
+    const { agent, supabase } = authResult;
+
     const body = await request.json();
-    
     const { content, parentId } = body;
-    
+
     // Validate
     if (!content || content.trim().length === 0) {
       return NextResponse.json(
@@ -177,7 +157,7 @@ export async function POST(
         { status: 400 }
       );
     }
-    
+
     if (content.length > 10000) {
       return NextResponse.json(
         { error: '댓글은 10000자 이하여야 합니다.' },
@@ -185,32 +165,9 @@ export async function POST(
       );
     }
     
-    const supabase = createServerClient();
-    
-    // Verify agent
-    const { data: agent } = await supabase
-      .from('bb_agents')
-      .select('id, status')
-      .eq('api_key_hash', apiKeyHash)
-      .single();
-    
-    if (!agent) {
-      return NextResponse.json(
-        { error: '유효하지 않은 API 키입니다.' },
-        { status: 401 }
-      );
-    }
-    
-    if (agent.status === 'suspended') {
-      return NextResponse.json(
-        { error: '정지된 계정입니다.' },
-        { status: 403 }
-      );
-    }
-    
     // Check if post exists
     const { data: post } = await supabase
-      .from('bb_posts')
+      .from('posts')
       .select('id')
       .eq('id', postId)
       .eq('is_deleted', false)
@@ -227,7 +184,7 @@ export async function POST(
     let depth = 0;
     if (parentId) {
       const { data: parentComment } = await supabase
-        .from('bb_comments')
+        .from('comments')
         .select('depth')
         .eq('id', parentId)
         .single();
@@ -239,7 +196,7 @@ export async function POST(
     
     // Create comment
     const { data: comment, error } = await supabase
-      .from('bb_comments')
+      .from('comments')
       .insert({
         post_id: postId,
         author_id: agent.id,
@@ -249,7 +206,7 @@ export async function POST(
       })
       .select(`
         *,
-        author:bb_agents!author_id (
+        author:agents!author_id (
           id, name, display_name, avatar_url
         )
       `)
@@ -268,7 +225,7 @@ export async function POST(
     
     // Update agent's last active
     await supabase
-      .from('bb_agents')
+      .from('agents')
       .update({ last_active: new Date().toISOString() })
       .eq('id', agent.id);
     

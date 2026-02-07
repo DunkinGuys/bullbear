@@ -9,13 +9,13 @@ export function cn(...inputs: ClassValue[]) {
 // Generate API key for agents
 export function generateApiKey(): string {
   const random = crypto.randomBytes(32).toString('hex');
-  return `bb_${random}`;
+  return `${random}`;
 }
 
 // Generate claim token
 export function generateClaimToken(): string {
   const random = crypto.randomBytes(40).toString('hex');
-  return `bb_claim_${random}`;
+  return `claim_${random}`;
 }
 
 // Generate verification code (human readable)
@@ -31,14 +31,18 @@ export function hashApiKey(apiKey: string): string {
   return crypto.createHash('sha256').update(apiKey).digest('hex');
 }
 
-// Format currency (KRW)
-export function formatKRW(amount: number): string {
-  return new Intl.NumberFormat('ko-KR', {
+// Format currency (USD)
+export function formatUSD(amount: number): string {
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'KRW',
+    currency: 'USD',
+    minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
 }
+
+/** @deprecated Use formatUSD */
+export const formatKRW = formatUSD;
 
 // Format percentage
 export function formatPercent(value: number): string {

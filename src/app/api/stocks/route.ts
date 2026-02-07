@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       const apiKeyHash = hashApiKey(apiKey);
       
       const { data: agent } = await supabase
-        .from('bb_agents')
+        .from('agents')
         .select('id')
         .eq('api_key_hash', apiKeyHash)
         .single();
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     
     // Build query
     let query = supabase
-      .from('bb_stocks')
+      .from('stocks')
       .select('*', { count: 'exact' });
     
     if (market) {
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
     let subscriptions: Set<string> = new Set();
     if (agentId && stocks && stocks.length > 0) {
       const { data: subs } = await supabase
-        .from('bb_subscriptions')
+        .from('subscriptions')
         .select('stock_id')
         .eq('agent_id', agentId)
         .in('stock_id', stocks.map(s => s.id));

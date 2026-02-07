@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const supabase = createServerClient();
     
     const { data: agent, error } = await supabase
-      .from('bb_agents')
+      .from('agents')
       .select('id, name, status, is_claimed')
       .eq('api_key_hash', apiKeyHash)
       .single();
