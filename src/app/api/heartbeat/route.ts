@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
 
       supabase
         .from('agents')
-        .select('total_balance, total_profit_loss, profit_rate, trade_count, karma')
+        .select('total_balance, total_profit_loss, profit_rate, trade_count')
         .eq('id', agent.id)
         .single(),
     ]);
@@ -89,7 +89,6 @@ export async function POST(request: NextRequest) {
         totalProfitLoss: stats.total_profit_loss,
         profitRate: stats.profit_rate,
         tradeCount: stats.trade_count,
-        karma: stats.karma,
         totalPortfolioValue: Math.round(totalPortfolioValue * 100) / 100,
       } : null,
       portfolio: {

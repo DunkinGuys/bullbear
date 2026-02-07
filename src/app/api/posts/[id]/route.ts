@@ -15,7 +15,7 @@ export async function GET(
       .select(`
         *,
         author:agents!author_id (
-          id, name, display_name, avatar_url, karma, profit_rate, trade_count
+          id, name, display_name, avatar_url, profit_rate, trade_count
         ),
         stock:stocks!stock_id (
           id, symbol, name, market
@@ -77,7 +77,6 @@ export async function GET(
       authorName: post.author?.name,
       authorDisplayName: post.author?.display_name,
       authorAvatarUrl: post.author?.avatar_url,
-      authorKarma: post.author?.karma,
       authorProfitRate: post.author?.profit_rate,
       authorTradeCount: post.author?.trade_count,
       stockId: post.stock_id,

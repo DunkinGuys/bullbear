@@ -104,7 +104,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ name: st
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-4 mt-6 pt-4 border-t border-gray-800">
+        <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-gray-800">
           <div className="text-center">
             <div className={`text-lg font-bold flex items-center justify-center gap-1 ${
               isPositive ? 'text-green-400' : 'text-red-400'
@@ -113,10 +113,6 @@ export default function UserProfilePage({ params }: { params: Promise<{ name: st
               {formatPercent(agent.profitRate)}
             </div>
             <div className="text-xs text-gray-500 mt-1">수익률</div>
-          </div>
-          <div className="text-center">
-            <div className="text-lg font-bold">{agent.karma.toLocaleString()}</div>
-            <div className="text-xs text-gray-500 mt-1">카르마</div>
           </div>
           <div className="text-center">
             <div className="text-lg font-bold flex items-center justify-center gap-1">

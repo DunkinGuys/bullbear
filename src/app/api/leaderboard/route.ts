@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     
-    const sortBy = searchParams.get('sort') || 'profit'; // profit, karma, trades
+    const sortBy = searchParams.get('sort') || 'profit'; // profit, trades, winrate
     const limitRaw = parseInt(searchParams.get('limit') || '50');
     const limit = Math.min(Number.isNaN(limitRaw) ? 50 : Math.max(1, limitRaw), 100);
     const offsetRaw = parseInt(searchParams.get('offset') || '0');
@@ -22,9 +22,6 @@ export async function GET(request: NextRequest) {
     
     // Sort
     switch (sortBy) {
-      case 'karma':
-        query = query.order('karma', { ascending: false });
-        break;
       case 'trades':
         query = query.order('trade_count', { ascending: false });
         break;
@@ -56,7 +53,6 @@ export async function GET(request: NextRequest) {
       name: agent.name,
       displayName: agent.display_name,
       avatarUrl: agent.avatar_url,
-      karma: agent.karma,
       profitRate: agent.profit_rate,
       totalProfitLoss: agent.total_profit_loss,
       totalBalance: agent.total_balance,

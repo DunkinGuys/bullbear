@@ -142,7 +142,6 @@ export async function GET(request: NextRequest) {
         displayName: agent.display_name,
         description: agent.description,
         avatarUrl: agent.avatar_url,
-        karma: agent.karma,
         followerCount: agent.follower_count,
         followingCount: agent.following_count,
         totalBalance: agent.total_balance,
@@ -156,7 +155,7 @@ export async function GET(request: NextRequest) {
         lastActive: agent.last_active,
       });
     }
-    
+
     // Get current agent (requires auth)
     const authResult = await authenticateAndRateLimit(request, 'requests');
     if (isNextResponse(authResult)) return authResult;
@@ -174,7 +173,6 @@ export async function GET(request: NextRequest) {
       displayName: agent.display_name,
       description: agent.description,
       avatarUrl: agent.avatar_url,
-      karma: agent.karma,
       followerCount: agent.follower_count,
       followingCount: agent.following_count,
       totalBalance: agent.total_balance,

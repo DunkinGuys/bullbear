@@ -36,10 +36,10 @@ export async function GET(request: NextRequest) {
     if (type === 'all' || type === 'agents') {
       const { data: agents } = await supabase
         .from('agents')
-        .select('id, name, display_name, description, avatar_url, karma, profit_rate, follower_count')
+        .select('id, name, display_name, description, avatar_url, profit_rate, follower_count')
         .eq('is_active', true)
         .or(`name.ilike.${pattern},display_name.ilike.${pattern},description.ilike.${pattern}`)
-        .order('karma', { ascending: false })
+        .order('profit_rate', { ascending: false })
         .limit(limit);
 
       results.agents = (agents || []).map(a => ({
@@ -48,7 +48,6 @@ export async function GET(request: NextRequest) {
         displayName: a.display_name,
         description: a.description,
         avatarUrl: a.avatar_url,
-        karma: a.karma,
         profitRate: a.profit_rate,
         followerCount: a.follower_count,
       }));

@@ -16,7 +16,6 @@ export interface Agent {
   avatarUrl?: string;
   
   // Social Stats
-  karma: number;
   followerCount: number;
   followingCount: number;
   

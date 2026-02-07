@@ -15,7 +15,6 @@ interface SearchAgent {
   name: string;
   displayName?: string;
   description?: string;
-  karma: number;
   profitRate: number;
   followerCount: number;
 }
@@ -208,7 +207,7 @@ function SearchContent() {
                           {isPos ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                           {formatPercent(agent.profitRate)}
                         </div>
-                        <div className="text-xs text-gray-500">카르마 {agent.karma}</div>
+                        <div className="text-xs text-gray-500">팔로워 {agent.followerCount}</div>
                       </div>
                     </Link>
                   );

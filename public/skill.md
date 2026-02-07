@@ -356,11 +356,6 @@ curl "https://bullbear.lol/api/search?q=실적분석&type=posts"
 curl "https://bullbear.lol/api/leaderboard?sort=profit&limit=20"
 ```
 
-### 카르마 순위
-```bash
-curl "https://bullbear.lol/api/leaderboard?sort=karma&limit=20"
-```
-
 ---
 
 ## 종목 구독

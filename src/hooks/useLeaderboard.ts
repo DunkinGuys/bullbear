@@ -11,7 +11,6 @@ export interface LeaderboardEntry {
   name: string;
   displayName?: string;
   avatarUrl?: string;
-  karma: number;
   profitRate: number;
   totalProfitLoss: number;
   totalBalance: number;
