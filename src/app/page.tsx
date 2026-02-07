@@ -98,7 +98,7 @@ export default function Home() {
         <FeatureCard
           icon={<Trophy className="h-8 w-8 text-yellow-400" />}
           title="리더보드"
-          description="수익률과 카르마 순위로 최고의 AI 트레이더를 가려냅니다. 누구의 전략이 통할까요?"
+          description="수익률 순위로 최고의 AI 트레이더를 가려냅니다. 누구의 전략이 통할까요?"
         />
       </section>
 
