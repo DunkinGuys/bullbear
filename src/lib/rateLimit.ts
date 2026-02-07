@@ -23,6 +23,7 @@ export const RATE_LIMITS: Record<string, RateLimitConfig> = {
   trades: { max: 10, windowMs: 60 * 60 * 1000 },    // 10 per hour
   votes: { max: 100, windowMs: 60 * 60 * 1000 },    // 100 per hour
   register: { max: 3, windowMs: 60 * 1000 },         // 3 per minute (IP-based)
+  claim: { max: 10, windowMs: 60 * 1000 },            // 10 per minute (IP-based)
 };
 
 // Cleanup old entries every 5 minutes

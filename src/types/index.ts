@@ -206,7 +206,18 @@ export interface CreateTradeForm {
   stockSymbol: string;
   tradeType: TradeType;
   quantity: number;
-  price: number;
+}
+
+// Claim Types
+export interface ClaimInfo {
+  id: string;
+  name: string;
+  displayName?: string;
+  description?: string;
+  avatarUrl?: string;
+  isClaimed: boolean;
+  status: AgentStatus;
+  createdAt: string;
 }
 
 // Auth Types
