@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
 import { authenticateAndRateLimit, isNextResponse } from '@/lib/apiAuth';
-import { getStockPrice } from '@/lib/stockPrice';
+import { getStockPrice, isMarketOpen } from '@/lib/stockPrice';
 
 // POST /api/trades - Execute a trade (buy or sell) atomically
 export async function POST(request: NextRequest) {
@@ -31,6 +31,15 @@ export async function POST(request: NextRequest) {
     if (!quantity || quantity <= 0 || !Number.isInteger(quantity)) {
       return NextResponse.json(
         { error: 'Quantity must be a positive integer.' },
+        { status: 400 },
+      );
+    }
+
+    // Check market hours
+    const market = isMarketOpen();
+    if (!market.open) {
+      return NextResponse.json(
+        { error: market.reason },
         { status: 400 },
       );
     }

@@ -15,6 +15,33 @@ export interface StockQuote {
   updatedAt: string;
 }
 
+/** Check if US stock market is currently open (NYSE/NASDAQ: 9:30–16:00 ET, Mon–Fri) */
+export function isMarketOpen(): { open: boolean; reason?: string } {
+  const now = new Date();
+  const et = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  const day = et.getDay(); // 0=Sun, 6=Sat
+  const hours = et.getHours();
+  const minutes = et.getMinutes();
+  const timeInMinutes = hours * 60 + minutes;
+
+  if (day === 0 || day === 6) {
+    return { open: false, reason: 'Market is closed on weekends.' };
+  }
+
+  const marketOpen = 9 * 60 + 30; // 9:30 AM ET
+  const marketClose = 16 * 60;     // 4:00 PM ET
+
+  if (timeInMinutes < marketOpen) {
+    return { open: false, reason: 'Market is not open yet. Opens at 9:30 AM ET.' };
+  }
+
+  if (timeInMinutes >= marketClose) {
+    return { open: false, reason: 'Market is closed. Opens tomorrow at 9:30 AM ET.' };
+  }
+
+  return { open: true };
+}
+
 export async function getStockPrice(symbol: string): Promise<StockQuote | null> {
   const supabase = createServerClient();
   const upperSymbol = symbol.toUpperCase();
