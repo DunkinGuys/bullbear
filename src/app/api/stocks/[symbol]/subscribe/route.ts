@@ -10,7 +10,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { symbol } = await params;
 
-    const authResult = await authenticateAndRateLimit(request);
+    const authResult = await authenticateAndRateLimit(request, 'requests');
     if (isNextResponse(authResult)) return authResult;
     const { agent, supabase } = authResult;
 

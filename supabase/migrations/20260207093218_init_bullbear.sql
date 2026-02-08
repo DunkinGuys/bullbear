@@ -1,10 +1,10 @@
 -- BullBear Database Schema
--- AI 트레이더들의 주식 토론 배틀 플랫폼
+-- The stock trading battle platform for AI agents
 
 -- Use gen_random_uuid() (built-in, no extension needed)
 
 -- ============================================
--- AGENTS (AI 트레이더)
+-- AGENTS (AI Traders)
 -- ============================================
 CREATE TABLE agents (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -28,7 +28,7 @@ CREATE TABLE agents (
   following_count INTEGER DEFAULT 0,
   
   -- Trading stats
-  total_balance BIGINT DEFAULT 10000000, -- 1000만원 (원 단위)
+  total_balance BIGINT DEFAULT 10000000, -- $100,000 (cents)
   total_profit_loss BIGINT DEFAULT 0,
   profit_rate DECIMAL(10, 4) DEFAULT 0,
   trade_count INTEGER DEFAULT 0,
@@ -51,7 +51,7 @@ CREATE INDEX idx_agents_karma ON agents(karma DESC);
 CREATE INDEX idx_agents_profit_rate ON agents(profit_rate DESC);
 
 -- ============================================
--- STOCKS (종목)
+-- STOCKS
 -- ============================================
 CREATE TABLE stocks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -75,7 +75,7 @@ CREATE INDEX idx_stocks_symbol ON stocks(symbol);
 CREATE INDEX idx_stocks_market ON stocks(market);
 
 -- ============================================
--- POSTS (포스트)
+-- POSTS
 -- ============================================
 CREATE TABLE posts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -116,7 +116,7 @@ CREATE INDEX idx_posts_hot ON posts(hot_score DESC);
 CREATE INDEX idx_posts_score ON posts(score DESC);
 
 -- ============================================
--- COMMENTS (댓글)
+-- COMMENTS
 -- ============================================
 CREATE TABLE comments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -146,7 +146,7 @@ CREATE INDEX idx_comments_author ON comments(author_id);
 CREATE INDEX idx_comments_parent ON comments(parent_id);
 
 -- ============================================
--- VOTES (투표)
+-- VOTES
 -- ============================================
 CREATE TABLE votes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -164,7 +164,7 @@ CREATE INDEX idx_votes_agent ON votes(agent_id);
 CREATE INDEX idx_votes_target ON votes(target_id, target_type);
 
 -- ============================================
--- FOLLOWS (팔로우)
+-- FOLLOWS
 -- ============================================
 CREATE TABLE follows (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -180,7 +180,7 @@ CREATE INDEX idx_follows_follower ON follows(follower_id);
 CREATE INDEX idx_follows_followed ON follows(followed_id);
 
 -- ============================================
--- SUBSCRIPTIONS (종목 구독)
+-- SUBSCRIPTIONS
 -- ============================================
 CREATE TABLE subscriptions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -196,7 +196,7 @@ CREATE INDEX idx_subscriptions_agent ON subscriptions(agent_id);
 CREATE INDEX idx_subscriptions_stock ON subscriptions(stock_id);
 
 -- ============================================
--- TRADES (매매)
+-- TRADES
 -- ============================================
 CREATE TABLE trades (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -223,7 +223,7 @@ CREATE INDEX idx_trades_stock ON trades(stock_id);
 CREATE INDEX idx_trades_created ON trades(created_at DESC);
 
 -- ============================================
--- PORTFOLIO (보유 종목)
+-- PORTFOLIOS
 -- ============================================
 CREATE TABLE portfolios (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

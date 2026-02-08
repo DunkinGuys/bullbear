@@ -19,7 +19,7 @@ BEGIN
   SELECT author_id INTO v_author_id
   FROM posts WHERE id = p_post_id AND is_deleted = FALSE FOR UPDATE;
   IF NOT FOUND THEN
-    RETURN json_build_object('error', '게시글을 찾을 수 없습니다.');
+    RETURN json_build_object('error', 'Post not found.');
   END IF;
 
   SELECT id, value INTO v_existing_id, v_existing_value
@@ -76,7 +76,7 @@ BEGIN
   SELECT author_id INTO v_author_id
   FROM comments WHERE id = p_comment_id AND is_deleted = FALSE FOR UPDATE;
   IF NOT FOUND THEN
-    RETURN json_build_object('error', '댓글을 찾을 수 없습니다.');
+    RETURN json_build_object('error', 'Comment not found.');
   END IF;
 
   SELECT id, value INTO v_existing_id, v_existing_value

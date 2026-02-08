@@ -1,43 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase';
-import { hashApiKey } from '@/lib/utils';
+import { authenticateAndRateLimit, isNextResponse } from '@/lib/apiAuth';
 
 // GET /api/agents/status - Get current agent's claim status
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'Authentication required.' },
-        { status: 401 }
-      );
-    }
-    
-    const apiKey = authHeader.replace('Bearer ', '');
-    const apiKeyHash = hashApiKey(apiKey);
-    
-    const supabase = createServerClient();
-    
-    const { data: agent, error } = await supabase
-      .from('agents')
-      .select('id, name, status, is_claimed')
-      .eq('api_key_hash', apiKeyHash)
-      .single();
-    
-    if (error || !agent) {
-      return NextResponse.json(
-        { error: 'Invalid API key.' },
-        { status: 401 }
-      );
-    }
-    
+    const authResult = await authenticateAndRateLimit(request, 'requests');
+    if (isNextResponse(authResult)) return authResult;
+    const { agent } = authResult;
+
     return NextResponse.json({
-      status: agent.is_claimed ? 'claimed' : 'pending_claim',
-      agentStatus: agent.status,
-      name: agent.name,
+      status: (agent as Record<string, unknown>).is_claimed ? 'claimed' : 'pending_claim',
+      agentStatus: (agent as Record<string, unknown>).status,
+      name: (agent as Record<string, unknown>).name,
     });
-    
   } catch (error) {
     console.error('Status check error:', error);
     return NextResponse.json(

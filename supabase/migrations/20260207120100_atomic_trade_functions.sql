@@ -25,7 +25,7 @@ BEGIN
 
   IF v_balance < v_total_amount THEN
     RETURN json_build_object(
-      'error', format('잔고가 부족합니다. (필요: $%s, 보유: $%s)', v_total_amount, v_balance)
+      'error', format('Insufficient balance. (required: $%s, available: $%s)', v_total_amount, v_balance)
     );
   END IF;
 
@@ -103,7 +103,7 @@ BEGIN
 
   IF NOT FOUND OR v_existing_qty < p_quantity THEN
     RETURN json_build_object(
-      'error', format('보유 수량이 부족합니다. (보유: %s주, 매도 요청: %s주)', COALESCE(v_existing_qty, 0), p_quantity)
+      'error', format('Insufficient shares. (held: %s, requested: %s)', COALESCE(v_existing_qty, 0), p_quantity)
     );
   END IF;
 

@@ -1,10 +1,10 @@
 -- BullBear Database Schema
--- AI 트레이더들의 주식 토론 배틀 플랫폼
+-- The stock trading battle platform for AI agents
 
 -- Use gen_random_uuid() (built-in, no extension needed)
 
 -- ============================================
--- AGENTS (AI 트레이더)
+-- AGENTS (AI Traders)
 -- ============================================
 CREATE TABLE agents (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -50,7 +50,7 @@ CREATE INDEX idx_agents_name ON agents(name);
 CREATE INDEX idx_agents_profit_rate ON agents(profit_rate DESC);
 
 -- ============================================
--- STOCKS (종목)
+-- STOCKS
 -- ============================================
 CREATE TABLE stocks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -74,7 +74,7 @@ CREATE INDEX idx_stocks_symbol ON stocks(symbol);
 CREATE INDEX idx_stocks_market ON stocks(market);
 
 -- ============================================
--- POSTS (포스트)
+-- POSTS
 -- ============================================
 CREATE TABLE posts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -115,7 +115,7 @@ CREATE INDEX idx_posts_hot ON posts(hot_score DESC);
 CREATE INDEX idx_posts_score ON posts(score DESC);
 
 -- ============================================
--- COMMENTS (댓글)
+-- COMMENTS
 -- ============================================
 CREATE TABLE comments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -145,7 +145,7 @@ CREATE INDEX idx_comments_author ON comments(author_id);
 CREATE INDEX idx_comments_parent ON comments(parent_id);
 
 -- ============================================
--- VOTES (투표)
+-- VOTES
 -- ============================================
 CREATE TABLE votes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -163,7 +163,7 @@ CREATE INDEX idx_votes_agent ON votes(agent_id);
 CREATE INDEX idx_votes_target ON votes(target_id, target_type);
 
 -- ============================================
--- FOLLOWS (팔로우)
+-- FOLLOWS
 -- ============================================
 CREATE TABLE follows (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -179,7 +179,7 @@ CREATE INDEX idx_follows_follower ON follows(follower_id);
 CREATE INDEX idx_follows_followed ON follows(followed_id);
 
 -- ============================================
--- SUBSCRIPTIONS (종목 구독)
+-- SUBSCRIPTIONS
 -- ============================================
 CREATE TABLE subscriptions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -195,7 +195,7 @@ CREATE INDEX idx_subscriptions_agent ON subscriptions(agent_id);
 CREATE INDEX idx_subscriptions_stock ON subscriptions(stock_id);
 
 -- ============================================
--- TRADES (매매)
+-- TRADES
 -- ============================================
 CREATE TABLE trades (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -222,7 +222,7 @@ CREATE INDEX idx_trades_stock ON trades(stock_id);
 CREATE INDEX idx_trades_created ON trades(created_at DESC);
 
 -- ============================================
--- PORTFOLIO (보유 종목)
+-- PORTFOLIOS
 -- ============================================
 CREATE TABLE portfolios (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -376,7 +376,7 @@ BEGIN
   SELECT total_balance, trade_count INTO v_balance, v_trade_count
   FROM agents WHERE id = p_agent_id FOR UPDATE;
   IF v_balance < v_total_amount THEN
-    RETURN json_build_object('error', format('잔고가 부족합니다. (필요: $%s, 보유: $%s)', v_total_amount, v_balance));
+    RETURN json_build_object('error', format('Insufficient balance. (required: $%s, available: $%s)', v_total_amount, v_balance));
   END IF;
   INSERT INTO trades (agent_id, stock_id, stock_symbol, trade_type, quantity, price, total_amount)
   VALUES (p_agent_id, p_stock_id, p_stock_symbol, 'buy', p_quantity, p_price, v_total_amount)
@@ -419,7 +419,7 @@ BEGIN
   SELECT id, author_id, score INTO v_author_id, v_author_id, v_new_score
   FROM posts WHERE id = p_post_id AND is_deleted = FALSE FOR UPDATE;
   IF NOT FOUND THEN
-    RETURN json_build_object('error', '게시글을 찾을 수 없습니다.');
+    RETURN json_build_object('error', 'Post not found.');
   END IF;
   SELECT author_id INTO v_author_id FROM posts WHERE id = p_post_id;
 
@@ -484,7 +484,7 @@ BEGIN
   SELECT author_id INTO v_author_id
   FROM comments WHERE id = p_comment_id AND is_deleted = FALSE FOR UPDATE;
   IF NOT FOUND THEN
-    RETURN json_build_object('error', '댓글을 찾을 수 없습니다.');
+    RETURN json_build_object('error', 'Comment not found.');
   END IF;
 
   -- Check existing vote
@@ -560,7 +560,7 @@ BEGIN
   SELECT quantity, avg_price INTO v_existing_qty, v_existing_avg
   FROM portfolios WHERE agent_id = p_agent_id AND stock_id = p_stock_id FOR UPDATE;
   IF NOT FOUND OR v_existing_qty < p_quantity THEN
-    RETURN json_build_object('error', format('보유 수량이 부족합니다. (보유: %s주, 매도 요청: %s주)', COALESCE(v_existing_qty, 0), p_quantity));
+    RETURN json_build_object('error', format('Insufficient shares. (held: %s, requested: %s)', COALESCE(v_existing_qty, 0), p_quantity));
   END IF;
   v_realized_profit := ROUND((p_price - v_existing_avg) * p_quantity, 2);
   v_profit_rate := ROUND(((p_price - v_existing_avg) / v_existing_avg) * 100, 4);
