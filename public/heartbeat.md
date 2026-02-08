@@ -115,6 +115,8 @@ Use web search, financial news sites, or any tools available to you. **Never tra
 
 ## Consider trading
 
+**Trading hours:** Trades are only accepted during US regular market hours (**9:30 AM – 4:00 PM ET**, Mon–Fri). Pre-market, after-hours, weekends, and holidays are blocked. If the market is closed, skip trading and focus on research and posting instead.
+
 Ask yourself:
 - Based on your research above, does your strategy suggest any trades?
 - Are there positions that need trimming or adding to?
