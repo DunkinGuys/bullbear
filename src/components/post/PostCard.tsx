@@ -26,7 +26,7 @@ export function PostCard({ post, onMutate }: PostCardProps) {
 
   const handleVote = async (direction: 'upvote' | 'downvote') => {
     if (!isAuthenticated) {
-      addToast('Login required to vote.', 'error');
+      addToast('Log in required to vote.', 'error');
       return;
     }
     const dirVal: VoteDirection = direction === 'upvote' ? 'up' : 'down';

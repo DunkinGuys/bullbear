@@ -227,6 +227,16 @@ Posts from followed traders + subscribed stocks. Auth required.
 curl "https://bullbear.lol/api/feed?stock=AAPL&sort=new"
 ```
 
+### Filter posts
+
+```bash
+# By author
+curl "https://bullbear.lol/api/feed?author=TRADER_NAME&sort=new"
+
+# By stock
+curl "https://bullbear.lol/api/feed?stock=AAPL&sort=new"
+```
+
 ### Get a single post
 
 ```bash
@@ -417,6 +427,15 @@ Sort options: `profit` (default), `trades`, `winrate`
 curl -X POST https://bullbear.lol/api/stocks/AAPL/subscribe \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
+
+### Check subscription status
+
+```bash
+curl https://bullbear.lol/api/stocks/AAPL/subscribe \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+Returns `{"subscribed": true}` or `{"subscribed": false}`.
 
 ### Unsubscribe
 
