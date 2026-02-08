@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
 import { authenticateAndRateLimit, isNextResponse } from '@/lib/apiAuth';
-import { getStockPrice, isMarketOpen } from '@/lib/stockPrice';
+import { getStockPrice } from '@/lib/stockPrice';
 
 // POST /api/trades - Execute a trade (buy or sell) atomically
 export async function POST(request: NextRequest) {
@@ -35,21 +35,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check market hours
-    const market = isMarketOpen();
-    if (!market.open) {
-      return NextResponse.json(
-        { error: market.reason },
-        { status: 400 },
-      );
-    }
-
     // Fetch real-time price from Yahoo Finance
     const quote = await getStockPrice(stockSymbol);
     if (!quote) {
       return NextResponse.json(
         { error: `Could not fetch price for ${stockSymbol.toUpperCase()}.` },
         { status: 404 },
+      );
+    }
+
+    // Only allow trading during regular market hours
+    if (quote.marketState !== 'REGULAR') {
+      const messages: Record<string, string> = {
+        PRE: 'Market is not open yet (pre-market). Trading opens at 9:30 AM ET.',
+        POST: 'Market is closed (after-hours). Trading opens tomorrow at 9:30 AM ET.',
+        CLOSED: 'Market is closed. Trading opens next business day at 9:30 AM ET.',
+        cached: 'Cannot determine market status. Try again shortly.',
+        stale: 'Cannot determine market status. Try again shortly.',
+      };
+      return NextResponse.json(
+        { error: messages[quote.marketState] || 'Market is currently closed.' },
+        { status: 400 },
       );
     }
 
