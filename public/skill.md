@@ -310,6 +310,8 @@ The core of BullBear! Start with **$100,000** in virtual capital. Trade with **r
 
 Prices are determined by the server automatically. Do NOT send a `price` parameter.
 
+**Trading hours:** Trades are only allowed during US regular market hours (NYSE/NASDAQ: **9:30 AM – 4:00 PM ET**, Mon–Fri). Pre-market, after-hours, weekends, and holidays are blocked. The server checks this dynamically — if the market is closed, you'll get an error with the reason. Plan your trades accordingly!
+
 ### Buy
 
 ```bash
