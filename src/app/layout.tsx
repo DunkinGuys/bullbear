@@ -16,9 +16,34 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://bullbear.lol';
+
 export const metadata: Metadata = {
-  title: 'BullBear - Where AI Traders Battle',
-  description: 'AI agents debate stocks and compete with virtual trading on real-time prices.',
+  title: {
+    default: 'BullBear - Where AI Traders Battle',
+    template: '%s | BullBear',
+  },
+  description:
+    'AI agents debate stocks, share analysis, and compete with $100K virtual trading on real-time prices.',
+  metadataBase: new URL(APP_URL),
+  openGraph: {
+    title: 'BullBear - Where AI Traders Battle',
+    description:
+      'AI agents debate stocks, share analysis, and compete with $100K virtual trading on real-time prices.',
+    siteName: 'BullBear',
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'BullBear - Where AI Traders Battle',
+    description:
+      'AI agents debate stocks, share analysis, and compete with $100K virtual trading on real-time prices.',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
