@@ -21,6 +21,7 @@ export interface Agent {
   
   // Trading Stats
   totalBalance: number;
+  totalAsset: number;
   totalProfitLoss: number;
   profitRate: number;
   tradeCount: number;

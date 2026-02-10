@@ -100,6 +100,33 @@ export async function POST(request: NextRequest) {
   }
 }
 
+const INITIAL_CAPITAL = 100_000;
+
+async function computeTotalAsset(supabase: ReturnType<typeof createServerClient>, agentId: string, cashBalance: number) {
+  const { data: positions } = await supabase
+    .from('portfolios')
+    .select('quantity, avg_price, stock:stocks (current_price)')
+    .eq('agent_id', agentId)
+    .gt('quantity', 0);
+
+  let holdingsValue = 0;
+  for (const p of positions || []) {
+    const stockData = p.stock as unknown as { current_price: number | null };
+    const currentPrice = stockData?.current_price || p.avg_price;
+    holdingsValue += p.quantity * currentPrice;
+  }
+
+  const totalAsset = Number(cashBalance) + holdingsValue;
+  const totalProfitLoss = totalAsset - INITIAL_CAPITAL;
+  const profitRate = (totalProfitLoss / INITIAL_CAPITAL) * 100;
+
+  return {
+    totalAsset: Math.round(totalAsset * 100) / 100,
+    totalProfitLoss: Math.round(totalProfitLoss * 100) / 100,
+    profitRate: Math.round(profitRate * 100) / 100,
+  };
+}
+
 // GET /api/agents - Get current agent or by name
 export async function GET(request: NextRequest) {
   try {
@@ -107,7 +134,7 @@ export async function GET(request: NextRequest) {
     const name = searchParams.get('name');
 
     const supabase = createServerClient();
-    
+
     if (name) {
       // Get agent by name (public profile)
       const { data: agent, error } = await supabase
@@ -136,6 +163,8 @@ export async function GET(request: NextRequest) {
         isFollowing = !!follow;
       }
 
+      const computed = await computeTotalAsset(supabase, agent.id, agent.total_balance);
+
       return NextResponse.json({
         id: agent.id,
         name: agent.name,
@@ -145,8 +174,9 @@ export async function GET(request: NextRequest) {
         followerCount: agent.follower_count,
         followingCount: agent.following_count,
         totalBalance: agent.total_balance,
-        totalProfitLoss: agent.total_profit_loss,
-        profitRate: agent.profit_rate,
+        totalAsset: computed.totalAsset,
+        totalProfitLoss: computed.totalProfitLoss,
+        profitRate: computed.profitRate,
         tradeCount: agent.trade_count,
         winCount: agent.win_count,
         status: agent.status,
@@ -167,6 +197,8 @@ export async function GET(request: NextRequest) {
       .update({ last_active: new Date().toISOString() })
       .eq('id', agent.id);
 
+    const computed = await computeTotalAsset(supabase, agent.id as string, Number(agent.total_balance));
+
     return NextResponse.json({
       id: agent.id,
       name: agent.name as string,
@@ -176,8 +208,9 @@ export async function GET(request: NextRequest) {
       followerCount: agent.follower_count,
       followingCount: agent.following_count,
       totalBalance: agent.total_balance,
-      totalProfitLoss: agent.total_profit_loss,
-      profitRate: agent.profit_rate,
+      totalAsset: computed.totalAsset,
+      totalProfitLoss: computed.totalProfitLoss,
+      profitRate: computed.profitRate,
       tradeCount: agent.trade_count,
       winCount: agent.win_count,
       status: agent.status,
@@ -185,7 +218,7 @@ export async function GET(request: NextRequest) {
       createdAt: agent.created_at,
       lastActive: agent.last_active,
     });
-    
+
   } catch (error) {
     console.error('Get agent error:', error);
     return NextResponse.json(

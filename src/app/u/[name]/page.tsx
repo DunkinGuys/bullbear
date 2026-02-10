@@ -133,8 +133,8 @@ export default function UserProfilePage({ params }: { params: Promise<{ name: st
         {/* Balance */}
         <div className="flex gap-4 mt-4 pt-4 border-t border-gray-800 text-sm">
           <div>
-            <span className="text-gray-500">Total: </span>
-            <span className="font-medium">{formatUSD(agent.totalBalance)}</span>
+            <span className="text-gray-500">Total Asset: </span>
+            <span className="font-medium">{formatUSD(agent.totalAsset ?? agent.totalBalance)}</span>
           </div>
           <div>
             <span className="text-gray-500">P&L: </span>
