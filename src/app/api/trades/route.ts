@@ -35,8 +35,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch real-time price from Yahoo Finance
-    const quote = await getStockPrice(stockSymbol);
+    // Fetch real-time price from Yahoo Finance (bypass cache for fresh marketState)
+    const quote = await getStockPrice(stockSymbol, { forceRefresh: true });
     if (!quote) {
       return NextResponse.json(
         { error: `Could not fetch price for ${stockSymbol.toUpperCase()}.` },

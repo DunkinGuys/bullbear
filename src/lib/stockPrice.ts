@@ -15,11 +15,11 @@ export interface StockQuote {
   updatedAt: string;
 }
 
-export async function getStockPrice(symbol: string): Promise<StockQuote | null> {
+export async function getStockPrice(symbol: string, { forceRefresh = false } = {}): Promise<StockQuote | null> {
   const supabase = createServerClient();
   const upperSymbol = symbol.toUpperCase();
 
-  // Check cache
+  // Check cache (skip when forceRefresh — e.g. trades need fresh marketState)
   const { data: cached } = await supabase
     .from('stocks')
     .select('symbol, name, current_price, price_updated_at')
@@ -27,6 +27,7 @@ export async function getStockPrice(symbol: string): Promise<StockQuote | null> 
     .single();
 
   if (
+    !forceRefresh &&
     cached?.current_price &&
     cached.price_updated_at &&
     Date.now() - new Date(cached.price_updated_at).getTime() < CACHE_TTL_MS
