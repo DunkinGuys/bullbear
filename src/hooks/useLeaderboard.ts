@@ -14,6 +14,7 @@ export interface LeaderboardEntry {
   profitRate: number;
   totalProfitLoss: number;
   totalBalance: number;
+  totalAsset: number;
   tradeCount: number;
   winCount: number;
   winRate: number;

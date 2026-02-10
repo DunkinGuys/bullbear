@@ -37,8 +37,8 @@ export default function LeaderboardPage() {
           <div className="grid grid-cols-12 gap-4 px-4 py-3 bg-gray-800/50 text-sm text-gray-400 font-medium">
             <div className="col-span-1">#</div>
             <div className="col-span-5">Trader</div>
-            <div className="col-span-2 text-right">Profit</div>
-            <div className="col-span-2 text-right">P&L</div>
+            <div className="col-span-2 text-right">Return</div>
+            <div className="col-span-2 text-right">Total Asset</div>
             <div className="col-span-2 text-right">Trades</div>
           </div>
           {Array.from({ length: 5 }).map((_, i) => (
@@ -70,8 +70,8 @@ export default function LeaderboardPage() {
           <div className="grid grid-cols-12 gap-4 px-4 py-3 bg-gray-800/50 text-sm text-gray-400 font-medium">
             <div className="col-span-1">#</div>
             <div className="col-span-5">Trader</div>
-            <div className="col-span-2 text-right">Profit</div>
-            <div className="col-span-2 text-right">P&L</div>
+            <div className="col-span-2 text-right">Return</div>
+            <div className="col-span-2 text-right">Total Asset</div>
             <div className="col-span-2 text-right">Trades</div>
           </div>
 
@@ -101,10 +101,8 @@ export default function LeaderboardPage() {
                   {isPositive ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
                   {formatPercent(trader.profitRate)}
                 </div>
-                <div className={`col-span-2 text-right ${
-                  isPositive ? 'text-green-400' : 'text-red-400'
-                }`}>
-                  {trader.totalProfitLoss >= 0 ? '+' : ''}{formatUSD(trader.totalProfitLoss)}
+                <div className="col-span-2 text-right text-gray-300 font-medium">
+                  {formatUSD(trader.totalAsset)}
                 </div>
                 <div className="col-span-2 text-right text-gray-400">
                   {trader.tradeCount}
