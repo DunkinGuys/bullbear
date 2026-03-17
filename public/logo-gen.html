@@ -1,45 +1,57 @@
 <!DOCTYPE html>
 <html>
-<body style="margin:0;background:#000">
-<canvas id="c" width="400" height="400"></canvas>
+<body style="margin:0;background:#000;display:flex;flex-direction:column;align-items:center;padding:40px">
+<canvas id="c" width="800" height="800"></canvas>
 <script>
 const c = document.getElementById('c');
 const ctx = c.getContext('2d');
+const s = 800;
 
-// Background
-const bg = ctx.createLinearGradient(0, 0, 400, 400);
-bg.addColorStop(0, '#0a0a0a');
-bg.addColorStop(1, '#1a1a2e');
+// Background circle
+const bg = ctx.createRadialGradient(s/2, s/2, 0, s/2, s/2, s/2);
+bg.addColorStop(0, '#1a1a2e');
+bg.addColorStop(1, '#0a0a0a');
 ctx.beginPath();
-ctx.arc(200, 200, 200, 0, Math.PI * 2);
+ctx.arc(s/2, s/2, s/2, 0, Math.PI * 2);
 ctx.fillStyle = bg;
 ctx.fill();
 
 // Gradient ring
-const ring = ctx.createLinearGradient(0, 0, 400, 400);
+const ring = ctx.createLinearGradient(0, 0, s, s);
 ring.addColorStop(0, '#22c55e');
 ring.addColorStop(0.5, '#eab308');
 ring.addColorStop(1, '#ef4444');
 ctx.beginPath();
-ctx.arc(200, 200, 180, 0, Math.PI * 2);
+ctx.arc(s/2, s/2, s/2 - 15, 0, Math.PI * 2);
 ctx.strokeStyle = ring;
-ctx.lineWidth = 8;
+ctx.lineWidth = 12;
 ctx.stroke();
 
-// Emojis
-ctx.font = '100px serif';
+// Big emojis - centered
+ctx.font = '250px "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
 ctx.textAlign = 'center';
 ctx.textBaseline = 'middle';
-ctx.fillText('🐂', 130, 200);
-ctx.fillText('🐻', 270, 200);
+ctx.fillText('🐂', s/2 - 110, s/2);
+ctx.fillText('🐻', s/2 + 110, s/2);
 
-// Download link
+// Download
 const link = document.createElement('a');
 link.download = 'bullbear-logo.png';
 link.href = c.toDataURL('image/png');
-link.textContent = 'Download PNG';
-link.style = 'color:white;font-size:20px;display:block;text-align:center;margin:20px';
+link.textContent = '⬇️ Download PNG (800x800)';
+link.style = 'color:#22c55e;font-size:24px;font-family:system-ui;display:block;text-align:center;margin:30px;text-decoration:none;padding:12px 24px;border:1px solid #22c55e;border-radius:12px';
 document.body.appendChild(link);
+
+// Also make a 400x400 version
+const c2 = document.createElement('canvas');
+c2.width = 400; c2.height = 400;
+c2.getContext('2d').drawImage(c, 0, 0, 400, 400);
+const link2 = document.createElement('a');
+link2.download = 'bullbear-logo-400.png';
+link2.href = c2.toDataURL('image/png');
+link2.textContent = '⬇️ Download PNG (400x400)';
+link2.style = 'color:#eab308;font-size:20px;font-family:system-ui;display:block;text-align:center;margin:10px;text-decoration:none;padding:10px 20px;border:1px solid #eab308;border-radius:12px';
+document.body.appendChild(link2);
 </script>
 </body>
 </html>
