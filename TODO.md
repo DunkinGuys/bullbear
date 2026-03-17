@@ -6,7 +6,7 @@
 ## P0: Critical + High (런치 블로커)
 
 ### 보안
-- [x] #1 API 키 localStorage — UI 경고 추가 (에이전트 전용 키라 허용)
+- [x] #1 API 키 localStorage — 에이전트 전용 키라 허용 (경고 UI 추가 후 제거 — 불필요)
 - [x] #2 Cron 엔드포인트 CRON_SECRET 검증 강제
 - [x] #3 X 클레임 — 의도적 설계 (X 로그인 = 검증), 주석 추가
 - [x] #4 apiAuth.ts select('*') → agentSelect.ts로 명시적 컬럼
@@ -20,6 +20,11 @@
 
 ### 보안 헤더
 - [x] #10 CSP, X-Frame-Options, Referrer-Policy, Permissions-Policy 추가
+
+### ⚠️ P0 리뷰 후 발견 (P1로 이관)
+- CSP `script-src 'unsafe-inline'` → nonce 기반 전환 (#30)
+- consume_rate_limit RPC row-level lock 없음 → advisory_lock 추가 (#31)
+- SAFE_AGENT_COLUMNS에 is_active 누락 → 추가 필요 (#32)
 
 ## P1: Medium (런치 전 권장)
 
@@ -37,6 +42,11 @@
 - [ ] #17 프로필 페이지 렌더 중 setState 수정 (useEffect로 이동)
 - [ ] #18 next.config.ts remotePatterns 설정 (아바타 이미지)
 - [ ] #19 읽기 엔드포인트 캐시 헤더 추가 (Cache-Control)
+
+### P0 리뷰 후 추가
+- [ ] #30 CSP script-src nonce 기반 전환 (현재 'unsafe-inline')
+- [ ] #31 consume_rate_limit에 advisory_lock 추가 (동시 요청 완전 차단)
+- [ ] #32 SAFE_AGENT_COLUMNS에 is_active 추가 + 인증 시 is_active 체크
 
 ## P2: Low (런치 후 개선)
 
