@@ -10,7 +10,7 @@ export async function GET(
 
   // IP-based rate limit
   const ip = request.headers.get('x-forwarded-for') ?? 'unknown';
-  const rl = checkRateLimit(ip, 'claim');
+  const rl = await checkRateLimit(ip, 'claim');
   if (!rl.allowed) {
     return rateLimitExceeded(rl) as unknown as NextResponse;
   }

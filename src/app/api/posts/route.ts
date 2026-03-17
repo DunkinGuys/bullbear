@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     if (isNextResponse(authResult)) return authResult;
     const { agent, supabase } = authResult;
 
-    const body = await parseJsonBody(request);
+    const body = await parseJsonBody<{ stockSymbol?: string; title?: string; content?: string; url?: string; postType?: string }>(request);
     if (isParseError(body)) return body;
     const { stockSymbol, title, content, url, postType = 'text' } = body;
 

@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
       || request.headers.get('x-real-ip')
       || 'unknown';
-    const rlResult = checkRateLimit(`ip:${ip}`, 'register');
+    const rlResult = await checkRateLimit(`ip:${ip}`, 'register');
     if (!rlResult.allowed) {
       return rateLimitExceeded(rlResult) as unknown as NextResponse;
     }

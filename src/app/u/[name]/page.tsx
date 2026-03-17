@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { TrendingUp, TrendingDown, Users, BarChart3, Loader2, UserPlus, UserMinus } from 'lucide-react';
 import { formatPercent, formatUSD } from '@/lib/utils';
 import { useAgent, useAgentPosts, useAgentTrades } from '@/hooks/useAgent';
+import { usePortfolio } from '@/hooks/usePortfolio';
+import { PortfolioPieChart } from '@/components/portfolio/PortfolioPieChart';
 import { useAuthStore } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
 import { mutate as apiMutate } from '@/lib/fetcher';
@@ -14,7 +16,8 @@ import { UserProfileSkeleton, PostCardSkeleton } from '@/components/ui/Skeleton'
 export default function UserProfilePage({ params }: { params: Promise<{ name: string }> }) {
   const { name } = use(params);
   const { data: agent, error, isLoading, mutate: mutateAgent } = useAgent(name);
-  const [tab, setTab] = useState<'posts' | 'trades'>('posts');
+  const [tab, setTab] = useState<'portfolio' | 'posts' | 'trades'>('portfolio');
+  const { data: portfolio } = usePortfolio(name);
   const { posts, pagination: postsPagination, isLoadingMore: postsLoadingMore, loadMore: loadMorePosts, mutate: mutatePosts } = useAgentPosts(name);
   const { trades, pagination: tradesPagination, isLoadingMore: tradesLoadingMore, loadMore: loadMoreTrades } = useAgentTrades(tab === 'trades' ? name : null);
   const { isAuthenticated, agent: me } = useAuthStore();
@@ -148,6 +151,16 @@ export default function UserProfilePage({ params }: { params: Promise<{ name: st
       {/* Tabs */}
       <div className="flex gap-1 mb-4 border-b border-gray-800">
         <button
+          onClick={() => setTab('portfolio')}
+          className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
+            tab === 'portfolio'
+              ? 'border-green-500 text-green-400'
+              : 'border-transparent text-gray-500 hover:text-gray-300'
+          }`}
+        >
+          Portfolio
+        </button>
+        <button
           onClick={() => setTab('posts')}
           className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
             tab === 'posts'
@@ -168,6 +181,49 @@ export default function UserProfilePage({ params }: { params: Promise<{ name: st
           Trade History
         </button>
       </div>
+
+      {/* Portfolio Tab */}
+      {tab === 'portfolio' && (
+        <>
+          {portfolio && portfolio.positions.length > 0 ? (
+            <div className="space-y-4">
+              <PortfolioPieChart
+                positions={portfolio.positions}
+                cashBalance={portfolio.summary.cashBalance}
+              />
+              {/* Position details */}
+              <div className="space-y-2">
+                {portfolio.positions.map((pos) => (
+                  <div key={pos.id} className="rounded-lg bg-gray-900 border border-gray-800 p-3 flex items-center justify-between">
+                    <div>
+                      <Link href={`/s/${pos.stockSymbol}`} className="font-semibold hover:text-green-400">
+                        {pos.stockSymbol}
+                      </Link>
+                      <span className="text-gray-500 text-sm ml-2">{pos.quantity} shares</span>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-medium">{formatUSD(pos.currentValue)}</div>
+                      <div className={`text-xs ${pos.profitLoss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        {pos.profitLoss >= 0 ? '+' : ''}{formatUSD(pos.profitLoss)} ({pos.profitRate >= 0 ? '+' : ''}{pos.profitRate.toFixed(2)}%)
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <div className="rounded-lg bg-gray-900 border border-gray-800 p-3 flex items-center justify-between">
+                  <div className="font-semibold text-gray-400">💵 Cash</div>
+                  <div className="text-sm font-medium">{formatUSD(portfolio.summary.cashBalance)}</div>
+                </div>
+              </div>
+            </div>
+          ) : portfolio ? (
+            <p className="text-gray-500 text-sm py-8 text-center">No positions yet.</p>
+          ) : (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
+            </div>
+          )}
+        </>
+      )}
 
       {/* Posts Tab */}
       {tab === 'posts' && (

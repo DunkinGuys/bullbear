@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     if (isNextResponse(authResult)) return authResult;
     const { agent, supabase } = authResult;
 
-    const body = await parseJsonBody(request);
+    const body = await parseJsonBody<{ stockSymbol?: string; tradeType?: string; quantity?: number }>(request);
     if (isParseError(body)) return body;
     const { stockSymbol, tradeType, quantity } = body;
 
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!['buy', 'sell'].includes(tradeType)) {
+    if (!tradeType || !['buy', 'sell'].includes(tradeType)) {
       return NextResponse.json(
         { error: 'Trade type must be buy or sell.' },
         { status: 400 },
