@@ -33,6 +33,9 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  // Intentional design: X login itself is the ownership check for BullBear claims.
+  // We do not perform an additional tweet lookup here.
+
   // Generate PKCE + state
   const { codeVerifier, codeChallenge } = generatePKCE();
   const state = crypto.randomBytes(16).toString('hex');

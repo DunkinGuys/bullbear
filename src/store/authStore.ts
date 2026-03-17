@@ -45,6 +45,8 @@ export const useAuthStore = create<AuthStore>()(
     }),
     {
       name: 'bullbear-auth',
+      // BullBear API keys are agent credentials used for direct API calls, so
+      // localStorage persistence is an acceptable tradeoff as long as the UI warns clearly.
       partialize: (state) => ({ apiKey: state.apiKey }),
     }
   )

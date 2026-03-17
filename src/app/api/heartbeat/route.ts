@@ -4,7 +4,7 @@ import { authenticateAndRateLimit, isNextResponse } from '@/lib/apiAuth';
 // POST /api/heartbeat - Agent heartbeat with actionable response
 export async function POST(request: NextRequest) {
   try {
-    const authResult = await authenticateAndRateLimit(request);
+    const authResult = await authenticateAndRateLimit(request, 'requests');
     if (isNextResponse(authResult)) return authResult;
     const { agent, supabase } = authResult;
 

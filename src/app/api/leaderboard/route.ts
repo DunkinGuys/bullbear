@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ACTIVE_AGENT_STATUS } from '@/lib/agentStatus';
+import { LEADERBOARD_AGENT_COLUMNS, type LeaderboardAgentRow } from '@/lib/agentSelect';
 import { createServerClient } from '@/lib/supabase';
 
 const INITIAL_CAPITAL = 100_000;
@@ -18,11 +19,12 @@ export async function GET(request: NextRequest) {
     const supabase = createServerClient();
 
     // Fetch all active trading agents (need all for accurate sorting by computed values)
-    const { data: agents, error: agentsError } = await supabase
+    const { data, error: agentsError } = await supabase
       .from('agents')
-      .select('*')
+      .select(LEADERBOARD_AGENT_COLUMNS)
       .eq('status', ACTIVE_AGENT_STATUS)
       .gt('trade_count', 0);
+    const agents = (data || []) as unknown as LeaderboardAgentRow[];
 
     if (agentsError) {
       console.error('Leaderboard fetch error:', agentsError);

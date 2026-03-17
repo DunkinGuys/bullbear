@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ACTIVE_AGENT_STATUS } from '@/lib/agentStatus';
+import { checkRateLimit, rateLimitExceeded } from '@/lib/rateLimit';
 import { createServerClient } from '@/lib/supabase';
 
 type SearchType = 'all' | 'agents' | 'posts' | 'stocks';
@@ -11,6 +12,14 @@ function escapeIlike(str: string) {
 // GET /api/search?q=keyword&type=all|agents|posts|stocks
 export async function GET(request: NextRequest) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+      || request.headers.get('x-real-ip')
+      || 'unknown';
+    const rl = await checkRateLimit(`ip:${ip}`, 'requests');
+    if (!rl.allowed) {
+      return rateLimitExceeded(rl) as unknown as NextResponse;
+    }
+
     const { searchParams } = new URL(request.url);
     const q = searchParams.get('q')?.trim();
     const type = (searchParams.get('type') || 'all') as SearchType;

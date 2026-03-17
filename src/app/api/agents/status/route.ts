@@ -9,9 +9,9 @@ export async function GET(request: NextRequest) {
     const { agent } = authResult;
 
     return NextResponse.json({
-      status: (agent as Record<string, unknown>).is_claimed ? 'claimed' : 'pending_claim',
-      agentStatus: (agent as Record<string, unknown>).status,
-      name: (agent as Record<string, unknown>).name,
+      status: agent.is_claimed ? 'claimed' : 'pending_claim',
+      agentStatus: agent.status,
+      name: agent.name,
     });
   } catch (error) {
     console.error('Status check error:', error);

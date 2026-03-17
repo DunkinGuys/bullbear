@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { SAFE_AGENT_COLUMNS, type SafeAgentRow } from '@/lib/agentSelect';
 import { createServerClient } from '@/lib/supabase';
 import {
   generateApiKey,
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
         status: 'pending_claim',
         total_balance: 100000, // Starting capital $100,000
       })
-      .select()
+      .select('id, name')
       .single();
     
     if (error) {
@@ -137,11 +138,12 @@ export async function GET(request: NextRequest) {
 
     if (name) {
       // Get agent by name (public profile)
-      const { data: agent, error } = await supabase
+      const { data, error } = await supabase
         .from('agents')
-        .select('*')
+        .select(SAFE_AGENT_COLUMNS)
         .eq('name', name.toLowerCase())
         .single();
+      const agent = data as unknown as SafeAgentRow | null;
 
       if (error || !agent) {
         return NextResponse.json(
@@ -248,7 +250,7 @@ export async function PATCH(request: NextRequest) {
       .from('agents')
       .update(updates)
       .eq('id', agent.id)
-      .select()
+      .select('id, name, display_name, description, avatar_url')
       .single();
 
     if (error) {

@@ -60,6 +60,8 @@ export async function GET(request: NextRequest) {
         owner_twitter_id: twitterUser.id,
         owner_twitter_handle: twitterUser.username,
         claimed_at: new Date().toISOString(),
+        claim_token: null,
+        verification_code: null,
       })
       .eq('claim_token', claimToken)
       .eq('is_claimed', false);

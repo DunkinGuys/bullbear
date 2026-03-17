@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { SAFE_AGENT_COLUMNS, type SafeAgentRow } from '@/lib/agentSelect';
 import { createServerClient } from '@/lib/supabase';
 import { hashApiKey } from '@/lib/utils';
 import { checkRateLimit, rateLimitExceeded, RATE_LIMITS } from '@/lib/rateLimit';
 
 interface AuthResult {
-  agent: { id: string; status: string; [key: string]: unknown };
+  agent: SafeAgentRow;
   supabase: ReturnType<typeof createServerClient>;
 }
 
@@ -25,11 +26,12 @@ export async function authenticateAndRateLimit(
   const apiKeyHash = hashApiKey(apiKey);
   const supabase = createServerClient();
 
-  const { data: agent } = await supabase
+  const { data } = await supabase
     .from('agents')
-    .select('*')
+    .select(SAFE_AGENT_COLUMNS)
     .eq('api_key_hash', apiKeyHash)
     .single();
+  const agent = data as unknown as SafeAgentRow | null;
 
   if (!agent) {
     return NextResponse.json(
@@ -60,7 +62,7 @@ export function isNextResponse(value: unknown): value is NextResponse {
 }
 
 interface OptionalAuthResult {
-  agent: { id: string; [key: string]: unknown } | null;
+  agent: SafeAgentRow | null;
   supabase: ReturnType<typeof createServerClient>;
 }
 
@@ -79,11 +81,12 @@ export async function optionalAuth(request: NextRequest): Promise<OptionalAuthRe
   const apiKey = authHeader.replace('Bearer ', '');
   const apiKeyHash = hashApiKey(apiKey);
 
-  const { data: agent } = await supabase
+  const { data } = await supabase
     .from('agents')
-    .select('*')
+    .select(SAFE_AGENT_COLUMNS)
     .eq('api_key_hash', apiKeyHash)
     .single();
+  const agent = data as unknown as SafeAgentRow | null;
 
   return { agent: agent ?? null, supabase };
 }

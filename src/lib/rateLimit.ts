@@ -1,8 +1,7 @@
 /**
- * Rate limiting utility for BullBear API
- * 
- * Uses Supabase for persistent storage (works across serverless instances).
- * Falls back to in-memory for environments without Supabase.
+ * Rate limiting utility for BullBear API.
+ *
+ * Uses Supabase RPC so the count + insert happen atomically in one transaction.
  */
 
 import { createServerClient } from '@/lib/supabase';
@@ -23,20 +22,18 @@ export const RATE_LIMITS: Record<string, RateLimitConfig> = {
   claim: { max: 10, windowMs: 60 * 1000 },           // 10 per minute (IP-based)
 };
 
-// In-memory fallback (for dev/test)
-const memoryStorage = new Map<string, number[]>();
-
 export interface RateLimitResult {
   allowed: boolean;
   remaining: number;
   limit: number;
   resetAt: Date;
   retryAfter: number;
+  reason?: 'limit_exceeded' | 'backend_error';
 }
 
 /**
  * Check and consume rate limit using Supabase RPC.
- * Falls back to in-memory if Supabase is unavailable.
+ * If rate limit storage fails, deny the request rather than falling back.
  */
 export async function checkRateLimit(
   identifier: string,
@@ -49,14 +46,24 @@ export async function checkRateLimit(
 
   try {
     return await checkRateLimitSupabase(identifier, limitType, config);
-  } catch {
-    // Fallback to in-memory (dev, or if Supabase RPC not yet deployed)
-    return checkRateLimitMemory(identifier, limitType, config);
+  } catch (error) {
+    console.error('Rate limit check failed:', error);
+    const now = Date.now();
+    const resetAt = new Date(now + config.windowMs);
+
+    return {
+      allowed: false,
+      remaining: 0,
+      limit: config.max,
+      resetAt,
+      retryAfter: Math.ceil(config.windowMs / 1000),
+      reason: 'backend_error',
+    };
   }
 }
 
 /**
- * Supabase-backed rate limiting using a simple counter table.
+ * Supabase-backed rate limiting using an atomic RPC.
  */
 async function checkRateLimitSupabase(
   identifier: string,
@@ -65,75 +72,35 @@ async function checkRateLimitSupabase(
 ): Promise<RateLimitResult> {
   const supabase = createServerClient();
   const key = `${limitType}:${identifier}`;
-  const now = Date.now();
-  const windowStart = new Date(now - config.windowMs).toISOString();
+  const windowSeconds = Math.ceil(config.windowMs / 1000);
+  const { data, error } = await supabase.rpc('consume_rate_limit', {
+    p_key: key,
+    p_window_seconds: windowSeconds,
+    p_max_requests: config.max,
+  });
 
-  // Count recent entries in the window
-  const { count, error: countError } = await supabase
-    .from('rate_limits')
-    .select('*', { count: 'exact', head: true })
-    .eq('key', key)
-    .gte('created_at', windowStart);
+  if (error) throw error;
 
-  if (countError) throw countError;
-
-  const currentCount = count ?? 0;
-  const allowed = currentCount < config.max;
-  const remaining = Math.max(0, config.max - currentCount - (allowed ? 1 : 0));
-
-  const resetAt = new Date(now + config.windowMs);
-  const retryAfter = allowed ? 0 : Math.ceil(config.windowMs / 1000);
-
-  if (allowed) {
-    // Insert new entry
-    await supabase
-      .from('rate_limits')
-      .insert({ key, created_at: new Date(now).toISOString() });
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row) {
+    throw new Error('Rate limit RPC returned no rows');
   }
 
-  return { allowed, remaining, limit: config.max, resetAt, retryAfter };
-}
-
-/**
- * In-memory fallback (for dev/test or if Supabase table doesn't exist yet).
- */
-function checkRateLimitMemory(
-  identifier: string,
-  limitType: string,
-  config: RateLimitConfig
-): RateLimitResult {
-  const key = `rl:${limitType}:${identifier}`;
-  const now = Date.now();
-  const windowStart = now - config.windowMs;
-
-  let entries = memoryStorage.get(key) || [];
-  entries = entries.filter(ts => ts >= windowStart);
-
-  const allowed = entries.length < config.max;
-  const remaining = Math.max(0, config.max - entries.length - (allowed ? 1 : 0));
-
-  let resetAt: Date;
-  let retryAfter = 0;
-
-  if (entries.length > 0) {
-    const oldest = Math.min(...entries);
-    resetAt = new Date(oldest + config.windowMs);
-    retryAfter = Math.ceil((resetAt.getTime() - now) / 1000);
-  } else {
-    resetAt = new Date(now + config.windowMs);
-  }
-
-  if (allowed) {
-    entries.push(now);
-    memoryStorage.set(key, entries);
-  }
+  const allowed = Boolean(row.allowed);
+  const currentCount = Number(row.current_count ?? 0);
+  const remaining = Math.max(0, config.max - currentCount);
+  const resetAt = new Date(row.reset_at);
+  const retryAfter = allowed
+    ? 0
+    : Math.max(0, Math.ceil((resetAt.getTime() - Date.now()) / 1000));
 
   return {
     allowed,
     remaining,
     limit: config.max,
     resetAt,
-    retryAfter: allowed ? 0 : retryAfter,
+    retryAfter,
+    reason: allowed ? undefined : 'limit_exceeded',
   };
 }
 
@@ -160,14 +127,16 @@ export function rateLimitExceeded(result: RateLimitResult): Response {
   const headers = new Headers();
   addRateLimitHeaders(headers, result);
 
+  const isBackendError = result.reason === 'backend_error';
+
   return new Response(
     JSON.stringify({
-      error: 'Rate limit exceeded',
+      error: isBackendError ? 'Rate limit unavailable' : 'Rate limit exceeded',
       retryAfter: result.retryAfter,
       resetAt: result.resetAt.toISOString(),
     }),
     {
-      status: 429,
+      status: isBackendError ? 503 : 429,
       headers: {
         'Content-Type': 'application/json',
         ...Object.fromEntries(headers),
