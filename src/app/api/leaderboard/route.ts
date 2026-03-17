@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const { data: agents, error: agentsError } = await supabase
       .from('agents')
       .select('*')
-      .eq('is_active', true)
+      .eq('status', 'active')
       .gt('trade_count', 0);
 
     if (agentsError) {

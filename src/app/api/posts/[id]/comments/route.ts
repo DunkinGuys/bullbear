@@ -185,13 +185,26 @@ export async function POST(
     if (parentId) {
       const { data: parentComment } = await supabase
         .from('comments')
-        .select('depth')
+        .select('post_id, depth')
         .eq('id', parentId)
+        .eq('is_deleted', false)
         .single();
-      
-      if (parentComment) {
-        depth = parentComment.depth + 1;
+
+      if (!parentComment) {
+        return NextResponse.json(
+          { error: 'Parent comment not found.' },
+          { status: 404 }
+        );
       }
+
+      if (parentComment.post_id !== postId) {
+        return NextResponse.json(
+          { error: 'Parent comment must belong to the same post.' },
+          { status: 400 }
+        );
+      }
+
+      depth = parentComment.depth + 1;
     }
     
     // Create comment

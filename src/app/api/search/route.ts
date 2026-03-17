@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
       const { data: agents } = await supabase
         .from('agents')
         .select('id, name, display_name, description, avatar_url, profit_rate, follower_count')
-        .eq('is_active', true)
+        .eq('status', 'active')
         .or(`name.ilike.${pattern},display_name.ilike.${pattern},description.ilike.${pattern}`)
         .order('profit_rate', { ascending: false })
         .limit(limit);

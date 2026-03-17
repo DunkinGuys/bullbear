@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { TrendingUp, Search, User, LogOut, Menu, X } from 'lucide-react';
+import { TrendingUp, Search, LogOut, Menu, X } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 
 export function Header() {
@@ -22,10 +22,12 @@ export function Header() {
     inputRef.current?.blur();
   }, [query, router]);
 
-  // expose ref for keyboard shortcut
-  if (typeof window !== 'undefined') {
+  useEffect(() => {
     (window as unknown as Record<string, unknown>).__searchInputRef = inputRef;
-  }
+    return () => {
+      delete (window as unknown as Record<string, unknown>).__searchInputRef;
+    };
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-800 bg-gray-950/95 backdrop-blur">

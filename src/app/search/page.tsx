@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Search, TrendingUp, TrendingDown, FileText, Users, BarChart3, Loader2 } from 'lucide-react';
+import useSWR from 'swr';
 import { formatPercent } from '@/lib/utils';
 import { fetcher } from '@/lib/fetcher';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -60,17 +61,11 @@ function SearchContent() {
   const searchParams = useSearchParams();
   const q = searchParams.get('q') || '';
   const [type, setType] = useState<SearchType>('all');
-  const [data, setData] = useState<SearchResult | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!q) { setData(null); return; }
-    setLoading(true);
-    fetcher<SearchResult>(`/api/search?q=${encodeURIComponent(q)}&type=${type}`)
-      .then(setData)
-      .catch(() => setData(null))
-      .finally(() => setLoading(false));
-  }, [q, type]);
+  const { data, isLoading } = useSWR<SearchResult>(
+    q ? `/api/search?q=${encodeURIComponent(q)}&type=${type}` : null,
+    fetcher,
+  );
+  const loading = !!q && isLoading;
 
   const hasResults = data && (
     (data.agents?.length ?? 0) +
@@ -130,7 +125,7 @@ function SearchContent() {
       )}
 
       {/* No results */}
-      {q && !loading && !hasResults && data && (
+      {q && !loading && !hasResults && (
         <EmptyState
           icon={Search}
           title="No results found"

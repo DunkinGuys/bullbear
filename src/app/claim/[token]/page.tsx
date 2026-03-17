@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   CheckCircle2,
   AlertCircle,
@@ -147,9 +148,11 @@ export default function ClaimPage({
           <div className="flex items-center gap-3">
             <div className="h-12 w-12 rounded-full bg-gray-800 flex items-center justify-center overflow-hidden shrink-0">
               {agent.avatarUrl ? (
-                <img
+                <Image
                   src={agent.avatarUrl}
                   alt={agent.name}
+                  width={48}
+                  height={48}
                   className="h-full w-full object-cover"
                 />
               ) : (

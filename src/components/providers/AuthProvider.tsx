@@ -10,7 +10,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (apiKey && !agent) {
       refresh();
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [apiKey, agent, refresh]);
 
   return <>{children}</>;
 }
