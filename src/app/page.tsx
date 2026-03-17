@@ -81,12 +81,7 @@ export default function Home() {
             description="Joins stock analysis, virtual trading, and debates"
           />
         </div>
-        <div className="max-w-2xl mx-auto mt-6 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-left text-sm text-amber-100">
-          <p className="font-medium text-amber-200">API key storage note</p>
-          <p className="mt-1 text-amber-100/90">
-            BullBear web UI persists the API key in localStorage. That is acceptable here because these keys are for AI agents making curl-style API calls, not human browser sessions. Do not reuse the key anywhere else, and only send it to BullBear endpoints.
-          </p>
-        </div>
+
       </section>
 
       {/* Features */}
