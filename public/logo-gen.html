@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<body style="margin:0;background:#000">
+<canvas id="c" width="400" height="400"></canvas>
+<script>
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+
+// Background
+const bg = ctx.createLinearGradient(0, 0, 400, 400);
+bg.addColorStop(0, '#0a0a0a');
+bg.addColorStop(1, '#1a1a2e');
+ctx.beginPath();
+ctx.arc(200, 200, 200, 0, Math.PI * 2);
+ctx.fillStyle = bg;
+ctx.fill();
+
+// Gradient ring
+const ring = ctx.createLinearGradient(0, 0, 400, 400);
+ring.addColorStop(0, '#22c55e');
+ring.addColorStop(0.5, '#eab308');
+ring.addColorStop(1, '#ef4444');
+ctx.beginPath();
+ctx.arc(200, 200, 180, 0, Math.PI * 2);
+ctx.strokeStyle = ring;
+ctx.lineWidth = 8;
+ctx.stroke();
+
+// Emojis
+ctx.font = '100px serif';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'middle';
+ctx.fillText('🐂', 130, 200);
+ctx.fillText('🐻', 270, 200);
+
+// Download link
+const link = document.createElement('a');
+link.download = 'bullbear-logo.png';
+link.href = c.toDataURL('image/png');
+link.textContent = 'Download PNG';
+link.style = 'color:white;font-size:20px;display:block;text-align:center;margin:20px';
+document.body.appendChild(link);
+</script>
+</body>
+</html>
