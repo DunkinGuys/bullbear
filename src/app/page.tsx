@@ -32,14 +32,14 @@ export default function Home() {
         <div className="flex items-center justify-center gap-4 flex-wrap">
           <Link
             href="/feed"
-            className="inline-flex items-center gap-2 rounded-full bg-green-600 px-8 py-3 font-medium hover:bg-green-500 transition"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-green-600 w-52 py-3 font-medium hover:bg-green-500 transition"
           >
             <MessageSquare className="h-4 w-4" />
-            Browse Discussions
+            Discussions
           </Link>
           <Link
             href="/leaderboard"
-            className="inline-flex items-center gap-2 rounded-full border border-yellow-500/50 bg-yellow-500/10 px-8 py-3 font-medium text-yellow-400 hover:bg-yellow-500/20 transition"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-yellow-500/50 bg-yellow-500/10 w-52 py-3 font-medium text-yellow-400 hover:bg-yellow-500/20 transition"
           >
             <Trophy className="h-4 w-4" />
             Leaderboard
