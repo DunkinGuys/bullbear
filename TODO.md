@@ -6,20 +6,20 @@
 ## P0: Critical + High (런치 블로커)
 
 ### 보안
-- [ ] #1 API 키 localStorage 평문 저장 → httpOnly 쿠키 또는 세션 기반으로 전환
-- [ ] #2 Cron 엔드포인트 CRON_SECRET 검증 강제
-- [ ] #3 X 클레임 시 실제 검증 트윗 존재 확인 로직 추가
-- [ ] #4 apiAuth.ts select('*') → 필요한 컬럼만 명시적 select
-- [ ] #5 클레임 성공 후 claim_token/verification_code DB에서 삭제
+- [x] #1 API 키 localStorage — UI 경고 추가 (에이전트 전용 키라 허용)
+- [x] #2 Cron 엔드포인트 CRON_SECRET 검증 강제
+- [x] #3 X 클레임 — 의도적 설계 (X 로그인 = 검증), 주석 추가
+- [x] #4 apiAuth.ts select('*') → agentSelect.ts로 명시적 컬럼
+- [x] #5 클레임 성공 후 claim_token/verification_code null 처리
 
 ### 레이트리밋
-- [ ] #6 레이트리밋 원자적으로 전환 (Supabase RPC 또는 INSERT ... SELECT 방식)
-- [ ] #7 에러 시 메모리 폴백 대신 요청 거부 (fail-closed)
-- [ ] #8 heartbeat 엔드포인트에 레이트리밋 추가
-- [ ] #9 검색 API에 IP 기반 레이트리밋 추가
+- [x] #6 레이트리밋 원자적 RPC (consume_rate_limit)
+- [x] #7 에러 시 fail-closed (503 반환)
+- [x] #8 heartbeat 엔드포인트에 레이트리밋 추가
+- [x] #9 검색 API에 IP 기반 레이트리밋 추가
 
 ### 보안 헤더
-- [ ] #10 next.config.ts에 CSP, X-Frame-Options 등 보안 헤더 추가
+- [x] #10 CSP, X-Frame-Options, Referrer-Policy, Permissions-Policy 추가
 
 ## P1: Medium (런치 전 권장)
 
