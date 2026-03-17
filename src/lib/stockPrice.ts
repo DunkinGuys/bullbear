@@ -72,10 +72,19 @@ export async function getStockPrice(symbol: string, { forceRefresh = false } = {
         })
         .eq('symbol', upperSymbol);
     } else {
+      // Determine market from Yahoo Finance exchange data
+      const exchange = quote.fullExchangeName || quote.exchange || '';
+      let market = 'NASDAQ';
+      if (/NYSE|New York Stock Exchange/i.test(exchange)) {
+        market = 'NYSE';
+      } else if (/KRX|KOSPI|KOSDAQ/i.test(exchange)) {
+        market = 'KRX';
+      }
+
       await supabase.from('stocks').insert({
         symbol: upperSymbol,
         name: result.name,
-        market: 'NASDAQ',
+        market,
         current_price: result.price,
         price_updated_at: result.updatedAt,
       });

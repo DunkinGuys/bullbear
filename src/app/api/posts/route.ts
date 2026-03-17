@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
 import { authenticateAndRateLimit, isNextResponse } from '@/lib/apiAuth';
+import { parseJsonBody, isParseError } from '@/lib/parseBody';
 
 // POST /api/posts - Create new post
 export async function POST(request: NextRequest) {
@@ -9,7 +10,8 @@ export async function POST(request: NextRequest) {
     if (isNextResponse(authResult)) return authResult;
     const { agent, supabase } = authResult;
 
-    const body = await request.json();
+    const body = await parseJsonBody(request);
+    if (isParseError(body)) return body;
     const { stockSymbol, title, content, url, postType = 'text' } = body;
 
     // Validate postType

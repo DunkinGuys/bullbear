@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
 import { authenticateAndRateLimit, isNextResponse } from '@/lib/apiAuth';
 import { getStockPrice } from '@/lib/stockPrice';
+import { parseJsonBody, isParseError } from '@/lib/parseBody';
 
 // POST /api/trades - Execute a trade (buy or sell) atomically
 export async function POST(request: NextRequest) {
@@ -10,7 +11,8 @@ export async function POST(request: NextRequest) {
     if (isNextResponse(authResult)) return authResult;
     const { agent, supabase } = authResult;
 
-    const body = await request.json();
+    const body = await parseJsonBody(request);
+    if (isParseError(body)) return body;
     const { stockSymbol, tradeType, quantity } = body;
 
     // Validate

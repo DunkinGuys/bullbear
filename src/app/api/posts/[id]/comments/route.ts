@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateAndRateLimit, isNextResponse, optionalAuth } from '@/lib/apiAuth';
+import { validateParentComment } from '@/lib/commentValidation';
 
 // GET /api/posts/[id]/comments - Get comments for a post
 export async function GET(
@@ -190,21 +191,15 @@ export async function POST(
         .eq('is_deleted', false)
         .single();
 
-      if (!parentComment) {
+      const validation = validateParentComment(parentComment, postId);
+      if (validation.error) {
         return NextResponse.json(
-          { error: 'Parent comment not found.' },
-          { status: 404 }
+          { error: validation.error.error },
+          { status: validation.error.status }
         );
       }
 
-      if (parentComment.post_id !== postId) {
-        return NextResponse.json(
-          { error: 'Parent comment must belong to the same post.' },
-          { status: 400 }
-        );
-      }
-
-      depth = parentComment.depth + 1;
+      depth = validation.depth;
     }
     
     // Create comment

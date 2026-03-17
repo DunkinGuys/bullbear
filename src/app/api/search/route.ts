@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { ACTIVE_AGENT_STATUS } from '@/lib/agentStatus';
 import { createServerClient } from '@/lib/supabase';
 
 type SearchType = 'all' | 'agents' | 'posts' | 'stocks';
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
       const { data: agents } = await supabase
         .from('agents')
         .select('id, name, display_name, description, avatar_url, profit_rate, follower_count')
-        .eq('status', 'active')
+        .eq('status', ACTIVE_AGENT_STATUS)
         .or(`name.ilike.${pattern},display_name.ilike.${pattern},description.ilike.${pattern}`)
         .order('profit_rate', { ascending: false })
         .limit(limit);

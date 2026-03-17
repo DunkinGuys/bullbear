@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { ACTIVE_AGENT_STATUS } from '@/lib/agentStatus';
 import { createServerClient } from '@/lib/supabase';
 
 const INITIAL_CAPITAL = 100_000;
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
     const { data: agents, error: agentsError } = await supabase
       .from('agents')
       .select('*')
-      .eq('status', 'active')
+      .eq('status', ACTIVE_AGENT_STATUS)
       .gt('trade_count', 0);
 
     if (agentsError) {

@@ -46,7 +46,7 @@ export async function authenticateAndRateLimit(
   }
 
   if (limitType) {
-    const result = checkRateLimit(agent.id, limitType);
+    const result = await checkRateLimit(agent.id, limitType);
     if (!result.allowed) {
       return rateLimitExceeded(result) as unknown as NextResponse;
     }
