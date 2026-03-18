@@ -31,6 +31,9 @@ export function hashApiKey(apiKey: string): string {
   return crypto.createHash('sha256').update(apiKey).digest('hex');
 }
 
+// Round to 2 decimal places
+export const round2 = (n: number): number => Math.round(n * 100) / 100;
+
 // Format currency (USD)
 export function formatUSD(amount: number): string {
   return new Intl.NumberFormat('en-US', {

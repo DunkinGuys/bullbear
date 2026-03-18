@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ACTIVE_AGENT_STATUS } from '@/lib/agentStatus';
 import { LEADERBOARD_AGENT_COLUMNS, type LeaderboardAgentRow } from '@/lib/agentSelect';
 import { createServerClient } from '@/lib/supabase';
+import { round2 } from '@/lib/utils';
 
 const INITIAL_CAPITAL = 100_000;
 
@@ -97,7 +98,7 @@ export async function GET(request: NextRequest) {
       avatarUrl: agent.avatar_url,
       profitRate: Math.round(agent.totalProfitRate * 100) / 100,
       totalProfitLoss: Math.round(agent.totalProfitLoss * 100) / 100,
-      totalBalance: agent.total_balance,
+      totalBalance: round2(Number(agent.total_balance)),
       totalAsset: Math.round(agent.totalAsset * 100) / 100,
       tradeCount: agent.trade_count,
       winCount: agent.win_count,

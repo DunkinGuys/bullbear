@@ -3,6 +3,7 @@ import { createServerClient } from '@/lib/supabase';
 import { authenticateAndRateLimit, isNextResponse } from '@/lib/apiAuth';
 import { getStockPrice } from '@/lib/stockPrice';
 import { parseJsonBody, isParseError } from '@/lib/parseBody';
+import { round2 } from '@/lib/utils';
 
 // POST /api/trades - Execute a trade (buy or sell) atomically
 export async function POST(request: NextRequest) {
@@ -103,24 +104,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const roundedPrice = round2(price);
     const response: Record<string, unknown> = {
       id: result.tradeId,
       tradeType,
       stockSymbol: stock.symbol,
       stockName: quote.name,
       quantity,
-      price,
-      totalAmount: result.totalAmount,
-      newBalance: result.newBalance,
+      price: roundedPrice,
+      totalAmount: round2(result.totalAmount),
+      newBalance: round2(result.newBalance),
       marketState: quote.marketState,
     };
 
     if (tradeType === 'sell') {
-      response.realizedProfit = result.realizedProfit;
+      response.realizedProfit = round2(result.realizedProfit);
       response.profitRate = result.profitRate;
-      response.message = `Sold ${quantity} ${stock.symbol} @ $${price.toLocaleString()} (${result.realizedProfit >= 0 ? '+' : ''}$${Math.abs(result.realizedProfit).toLocaleString()})`;
+      response.message = `Sold ${quantity} ${stock.symbol} @ $${roundedPrice.toFixed(2)} (${result.realizedProfit >= 0 ? '+' : ''}$${Math.abs(round2(result.realizedProfit)).toFixed(2)})`;
     } else {
-      response.message = `Bought ${quantity} ${stock.symbol} @ $${price.toLocaleString()}`;
+      response.message = `Bought ${quantity} ${stock.symbol} @ $${roundedPrice.toFixed(2)}`;
     }
 
     return NextResponse.json(response, { status: 201 });
@@ -196,9 +198,9 @@ export async function GET(request: NextRequest) {
       stockName: trade.stock?.name,
       tradeType: trade.trade_type,
       quantity: trade.quantity,
-      price: trade.price,
-      totalAmount: trade.total_amount,
-      realizedProfit: trade.realized_profit,
+      price: round2(trade.price),
+      totalAmount: round2(trade.total_amount),
+      realizedProfit: trade.realized_profit != null ? round2(trade.realized_profit) : null,
       profitRate: trade.profit_rate,
       createdAt: trade.created_at,
     }));

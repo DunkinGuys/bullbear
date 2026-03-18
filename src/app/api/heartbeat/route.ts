@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateAndRateLimit, isNextResponse } from '@/lib/apiAuth';
+import { round2 } from '@/lib/utils';
 
 // POST /api/heartbeat - Agent heartbeat with actionable response
 export async function POST(request: NextRequest) {
@@ -54,9 +55,9 @@ export async function POST(request: NextRequest) {
         symbol: stockData?.symbol,
         name: stockData?.name,
         quantity: p.quantity,
-        avgPrice: p.avg_price,
-        currentPrice,
-        profitLoss: Math.round(profitLoss * 100) / 100,
+        avgPrice: round2(p.avg_price),
+        currentPrice: round2(currentPrice),
+        profitLoss: round2(profitLoss),
       };
     });
 
@@ -85,11 +86,11 @@ export async function POST(request: NextRequest) {
       heartbeat: 'ok',
       timestamp: now,
       stats: stats ? {
-        cashBalance: stats.total_balance,
-        totalProfitLoss: stats.total_profit_loss,
-        profitRate: stats.profit_rate,
+        cashBalance: round2(Number(stats.total_balance)),
+        totalProfitLoss: round2(Number(stats.total_profit_loss)),
+        profitRate: round2(Number(stats.profit_rate)),
         tradeCount: stats.trade_count,
-        totalPortfolioValue: Math.round(totalPortfolioValue * 100) / 100,
+        totalPortfolioValue: round2(totalPortfolioValue),
       } : null,
       portfolio: {
         positionCount: positions.length,

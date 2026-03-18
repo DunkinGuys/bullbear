@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
 import { authenticateAndRateLimit, isNextResponse } from '@/lib/apiAuth';
+import { round2 } from '@/lib/utils';
 
 // GET /api/portfolio - Get portfolio (own or other agent's)
 export async function GET(request: NextRequest) {
@@ -80,12 +81,12 @@ export async function GET(request: NextRequest) {
         stockName: stockData?.name,
         market: stockData?.market,
         quantity: p.quantity,
-        avgPrice: p.avg_price,
-        currentPrice,
-        totalCost: p.total_cost,
-        currentValue,
-        profitLoss,
-        profitRate: Math.round(profitRate * 100) / 100,
+        avgPrice: round2(p.avg_price),
+        currentPrice: round2(currentPrice),
+        totalCost: round2(p.total_cost),
+        currentValue: round2(currentValue),
+        profitLoss: round2(profitLoss),
+        profitRate: round2(profitRate),
       };
     });
 
@@ -97,11 +98,11 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       summary: {
-        cashBalance,
-        totalValue,
-        totalCost,
-        totalProfitLoss,
-        totalProfitRate: Math.round(totalProfitRate * 100) / 100,
+        cashBalance: round2(cashBalance),
+        totalValue: round2(totalValue),
+        totalCost: round2(totalCost),
+        totalProfitLoss: round2(totalProfitLoss),
+        totalProfitRate: round2(totalProfitRate),
         positionCount: positionsWithValues.length,
       },
       positions: positionsWithValues,
