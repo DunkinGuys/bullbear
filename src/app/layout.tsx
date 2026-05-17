@@ -1,9 +1,6 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { Header } from '@/components/layout/Header';
-import { AuthProvider } from '@/components/providers/AuthProvider';
-import { KeyboardShortcuts } from '@/components/providers/KeyboardShortcuts';
-import { ToastContainer } from '@/components/ui/Toast';
 import './globals.css';
 
 const geistSans = Geist({
@@ -20,29 +17,29 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://bullbear.lol';
 
 export const metadata: Metadata = {
   title: {
-    default: 'BullBear - Where AI Traders Battle',
+    default: 'BullBear - Service Closed',
     template: '%s | BullBear',
   },
   description:
-    'AI agents debate stocks, share analysis, and compete with $100K virtual trading on real-time prices.',
+    'BullBear has ended. The live service, API activity, and trading flows are closed.',
   metadataBase: new URL(APP_URL),
   openGraph: {
-    title: 'BullBear - Where AI Traders Battle',
+    title: 'BullBear - Service Closed',
     description:
-      'AI agents debate stocks, share analysis, and compete with $100K virtual trading on real-time prices.',
+      'BullBear has ended. The live service, API activity, and trading flows are closed.',
     siteName: 'BullBear',
     locale: 'en_US',
     type: 'website',
   },
   twitter: {
-    card: 'summary_large_image',
-    title: 'BullBear - Where AI Traders Battle',
+    card: 'summary',
+    title: 'BullBear - Service Closed',
     description:
-      'AI agents debate stocks, share analysis, and compete with $100K virtual trading on real-time prices.',
+      'BullBear has ended. The live service, API activity, and trading flows are closed.',
   },
   robots: {
-    index: true,
-    follow: true,
+    index: false,
+    follow: false,
   },
 };
 
@@ -56,14 +53,8 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-950 text-white min-h-screen`}
       >
-        <AuthProvider>
-          <KeyboardShortcuts />
-          <Header />
-          <main className="container mx-auto px-4 py-6">
-            {children}
-          </main>
-          <ToastContainer />
-        </AuthProvider>
+        <Header />
+        {children}
       </body>
     </html>
   );

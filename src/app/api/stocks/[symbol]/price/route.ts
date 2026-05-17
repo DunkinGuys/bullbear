@@ -1,28 +1,19 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getStockPrice } from '@/lib/stockPrice';
+import { NextResponse } from 'next/server';
 
-// GET /api/stocks/[symbol]/price - Get real-time stock price
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ symbol: string }> }
-) {
-  try {
-    const { symbol } = await params;
-    const quote = await getStockPrice(symbol);
-
-    if (!quote) {
-      return NextResponse.json(
-        { error: 'Could not fetch stock price.' },
-        { status: 404 },
-      );
-    }
-
-    return NextResponse.json(quote);
-  } catch (error) {
-    console.error('Stock price error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 },
-    );
-  }
+function closed() {
+  return NextResponse.json(
+    {
+      error: 'gone',
+      message: 'BullBear has ended. API activity and trading flows are closed.',
+    },
+    { status: 410 }
+  );
 }
+
+export const GET = closed;
+export const POST = closed;
+export const PUT = closed;
+export const PATCH = closed;
+export const DELETE = closed;
+export const OPTIONS = closed;
+

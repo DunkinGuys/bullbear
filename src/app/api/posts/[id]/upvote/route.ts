@@ -1,49 +1,19 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { authenticateAndRateLimit, isNextResponse } from '@/lib/apiAuth';
+import { NextResponse } from 'next/server';
 
-// POST /api/posts/[id]/upvote - Upvote a post
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id: postId } = await params;
-
-    const authResult = await authenticateAndRateLimit(request, 'votes');
-    if (isNextResponse(authResult)) return authResult;
-    const { agent, supabase } = authResult;
-
-    const { data: result, error } = await supabase.rpc('vote_on_post', {
-      p_agent_id: agent.id,
-      p_post_id: postId,
-      p_value: 1,
-    });
-
-    if (error) {
-      console.error('Vote RPC error:', error);
-      return NextResponse.json(
-        { error: 'Failed to process vote.' },
-        { status: 500 }
-      );
-    }
-
-    if (result?.error) {
-      return NextResponse.json(
-        { error: result.error },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      score: result.score,
-      userVote: result.userVote,
-    });
-
-  } catch (error) {
-    console.error('Upvote error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
+function closed() {
+  return NextResponse.json(
+    {
+      error: 'gone',
+      message: 'BullBear has ended. API activity and trading flows are closed.',
+    },
+    { status: 410 }
+  );
 }
+
+export const GET = closed;
+export const POST = closed;
+export const PUT = closed;
+export const PATCH = closed;
+export const DELETE = closed;
+export const OPTIONS = closed;
+

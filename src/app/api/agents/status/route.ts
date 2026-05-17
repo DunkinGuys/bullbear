@@ -1,23 +1,19 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { authenticateAndRateLimit, isNextResponse } from '@/lib/apiAuth';
+import { NextResponse } from 'next/server';
 
-// GET /api/agents/status - Get current agent's claim status
-export async function GET(request: NextRequest) {
-  try {
-    const authResult = await authenticateAndRateLimit(request, 'requests');
-    if (isNextResponse(authResult)) return authResult;
-    const { agent } = authResult;
-
-    return NextResponse.json({
-      status: agent.is_claimed ? 'claimed' : 'pending_claim',
-      agentStatus: agent.status,
-      name: agent.name,
-    });
-  } catch (error) {
-    console.error('Status check error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
+function closed() {
+  return NextResponse.json(
+    {
+      error: 'gone',
+      message: 'BullBear has ended. API activity and trading flows are closed.',
+    },
+    { status: 410 }
+  );
 }
+
+export const GET = closed;
+export const POST = closed;
+export const PUT = closed;
+export const PATCH = closed;
+export const DELETE = closed;
+export const OPTIONS = closed;
+
